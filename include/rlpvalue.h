@@ -59,7 +59,6 @@ public:
 
     size_t size() const { return values.size(); }
 
-    void getObjMap(std::map<std::string,RLPValue>& kv) const;
     const RLPValue& operator[](size_t index) const;
 
     bool isNull() const { return (typ == VNULL); }
@@ -104,7 +103,6 @@ private:
     std::string val;                       // numbers are stored as C++ strings
     std::vector<RLPValue> values;
 
-    bool findKey(const std::string& key, size_t& retIdx) const;
     void writeArray(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const;
 
 public:
@@ -173,7 +171,5 @@ static inline bool json_isspace(int ch)
 }
 
 extern const RLPValue NullRLPValue;
-
-const RLPValue& find_value( const RLPValue& obj, const std::string& name);
 
 #endif // __RLPVALUE_H__
