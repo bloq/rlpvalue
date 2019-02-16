@@ -13,7 +13,7 @@
 #include <string>
 #include <sstream>
 
-#include "univalue.h"
+#include "rlpvalue.h"
 
 namespace
 {

@@ -8,7 +8,7 @@
 #include <sstream>
 #include <stdlib.h>
 
-#include "univalue.h"
+#include "rlpvalue.h"
 
 const UniValue NullUniValue;
 

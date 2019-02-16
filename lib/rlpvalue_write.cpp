@@ -4,8 +4,8 @@
 
 #include <iomanip>
 #include <stdio.h>
-#include "univalue.h"
-#include "univalue_escapes.h"
+#include "rlpvalue.h"
+#include "rlpvalue_escapes.h"
 
 static std::string json_escape(const std::string& inS)
 {

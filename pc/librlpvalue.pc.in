@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libunivalue
-Description: libunivalue, C++ universal value object and JSON library
+Name: librlpvalue
+Description: librlpvalue, C++ universal value object and JSON library
 Version: @VERSION@
-Libs: -L${libdir} -lunivalue
+Libs: -L${libdir} -lrlpvalue
 Cflags: -I${includedir}

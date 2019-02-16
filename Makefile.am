@@ -2,24 +2,24 @@ ACLOCAL_AMFLAGS = -I build-aux/m4
 .PHONY: gen
 .INTERMEDIATE: $(GENBIN)
 
-include_HEADERS = include/univalue.h
-noinst_HEADERS = lib/univalue_escapes.h lib/univalue_utffilter.h
+include_HEADERS = include/rlpvalue.h
+noinst_HEADERS = lib/rlpvalue_escapes.h lib/rlpvalue_utffilter.h
 
-lib_LTLIBRARIES = libunivalue.la
+lib_LTLIBRARIES = librlpvalue.la
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = pc/libunivalue.pc
+pkgconfig_DATA = pc/librlpvalue.pc
 
-libunivalue_la_SOURCES = \
-	lib/univalue.cpp \
-	lib/univalue_get.cpp \
-	lib/univalue_read.cpp \
-	lib/univalue_write.cpp
+librlpvalue_la_SOURCES = \
+	lib/rlpvalue.cpp \
+	lib/rlpvalue_get.cpp \
+	lib/rlpvalue_read.cpp \
+	lib/rlpvalue_write.cpp
 
-libunivalue_la_LDFLAGS = \
-	-version-info $(LIBUNIVALUE_CURRENT):$(LIBUNIVALUE_REVISION):$(LIBUNIVALUE_AGE) \
+librlpvalue_la_LDFLAGS = \
+	-version-info $(LIBRLPVALUE_CURRENT):$(LIBRLPVALUE_REVISION):$(LIBRLPVALUE_AGE) \
 	-no-undefined
-libunivalue_la_CXXFLAGS = -I$(top_srcdir)/include
+librlpvalue_la_CXXFLAGS = -I$(top_srcdir)/include
 
 TESTS = test/object test/unitester test/no_nul
 
@@ -30,31 +30,31 @@ $(GENBIN): $(GEN_SRCS)
 	@echo Building $@
 	$(AM_V_at)c++ -I$(top_srcdir)/include -o $@ $<
 
-gen: lib/univalue_escapes.h $(GENBIN)
+gen: lib/rlpvalue_escapes.h $(GENBIN)
 	@echo Updating $<
-	$(AM_V_at)$(GENBIN) > lib/univalue_escapes.h
+	$(AM_V_at)$(GENBIN) > lib/rlpvalue_escapes.h
 
 noinst_PROGRAMS = $(TESTS) test/test_json
 
 TEST_DATA_DIR=test
 
 test_unitester_SOURCES = test/unitester.cpp
-test_unitester_LDADD = libunivalue.la
+test_unitester_LDADD = librlpvalue.la
 test_unitester_CXXFLAGS = -I$(top_srcdir)/include -DJSON_TEST_SRC=\"$(srcdir)/$(TEST_DATA_DIR)\"
 test_unitester_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
 test_test_json_SOURCES = test/test_json.cpp
-test_test_json_LDADD = libunivalue.la
+test_test_json_LDADD = librlpvalue.la
 test_test_json_CXXFLAGS = -I$(top_srcdir)/include
 test_test_json_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
 test_no_nul_SOURCES = test/no_nul.cpp
-test_no_nul_LDADD = libunivalue.la
+test_no_nul_LDADD = librlpvalue.la
 test_no_nul_CXXFLAGS = -I$(top_srcdir)/include
 test_no_nul_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
 test_object_SOURCES = test/object.cpp
-test_object_LDADD = libunivalue.la
+test_object_LDADD = librlpvalue.la
 test_object_CXXFLAGS = -I$(top_srcdir)/include
 test_object_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
