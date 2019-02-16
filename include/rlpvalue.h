@@ -89,8 +89,7 @@ public:
     }
     bool push_backV(const std::vector<RLPValue>& vec);
 
-    std::string write(unsigned int prettyIndent = 0,
-                      unsigned int indentLevel = 0) const;
+    std::string write() const;
 
     bool read(const char *raw, size_t len);
     bool read(const char *raw) { return read(raw, strlen(raw)); }
@@ -103,7 +102,8 @@ private:
     std::string val;                       // numbers are stored as C++ strings
     std::vector<RLPValue> values;
 
-    void writeArray(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const;
+    void writeString(std::string& s) const;
+    void writeArray(std::string& s) const;
 
 public:
     // Strict type-specific getters, these throw std::runtime_error if the

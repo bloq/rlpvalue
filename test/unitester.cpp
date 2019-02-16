@@ -48,7 +48,7 @@ static void runtest(std::string filename, const std::string& jdata)
         }
 
         if (wantRoundTrip) {
-            std::string odata = val.write(0, 0);
+            std::string odata = val.write();
             assert(odata == rtrim(jdata));
         }
 }

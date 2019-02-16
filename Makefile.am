@@ -1,9 +1,7 @@
 ACLOCAL_AMFLAGS = -I build-aux/m4
-.PHONY: gen
-.INTERMEDIATE: $(GENBIN)
 
 include_HEADERS = include/rlpvalue.h
-noinst_HEADERS = lib/rlpvalue_escapes.h lib/rlpvalue_utffilter.h
+noinst_HEADERS = lib/rlpvalue_utffilter.h
 
 lib_LTLIBRARIES = librlpvalue.la
 
@@ -22,17 +20,6 @@ librlpvalue_la_LDFLAGS = \
 librlpvalue_la_CXXFLAGS = -I$(top_srcdir)/include
 
 TESTS = test/object test/unitester test/no_nul
-
-GENBIN = gen/gen$(BUILD_EXEEXT)
-GEN_SRCS = gen/gen.cpp
-
-$(GENBIN): $(GEN_SRCS)
-	@echo Building $@
-	$(AM_V_at)c++ -I$(top_srcdir)/include -o $@ $<
-
-gen: lib/rlpvalue_escapes.h $(GENBIN)
-	@echo Updating $<
-	$(AM_V_at)$(GENBIN) > lib/rlpvalue_escapes.h
 
 noinst_PROGRAMS = $(TESTS) test/test_json
 
