@@ -12,17 +12,11 @@ std::string RLPValue::write() const
     s.reserve(64);
 
     switch (typ) {
-    case VNULL:
-	assert(0 && "should not be writing this atom");
-        break;
     case VARR:
         writeArray(s);
         break;
     case VSTR:
         writeString(s);
-        break;
-    case VNUM:
-	assert(0 && "should not be writing this atom");
         break;
     }
 

@@ -18,21 +18,12 @@
 
 class RLPValue {
 public:
-    enum VType { VNULL, VARR, VSTR, VNUM, };
+    enum VType { VARR, VSTR, };
 
-    RLPValue() { typ = VNULL; }
+    RLPValue() { typ = VSTR; }
     RLPValue(RLPValue::VType initialType, const std::string& initialStr = "") {
         typ = initialType;
         val = initialStr;
-    }
-    RLPValue(uint64_t val_) {
-        setInt(val_);
-    }
-    RLPValue(int64_t val_) {
-        setInt(val_);
-    }
-    RLPValue(int val_) {
-        setInt(val_);
     }
     RLPValue(const std::string& val_) {
         setStr(val_);
@@ -45,11 +36,6 @@ public:
 
     void clear();
 
-    bool setNull();
-    bool setNumStr(const std::string& val);
-    bool setInt(uint64_t val);
-    bool setInt(int64_t val);
-    bool setInt(int val_) { return setInt((int64_t)val_); }
     bool setStr(const std::string& val);
     bool setArray();
 
@@ -61,9 +47,7 @@ public:
 
     const RLPValue& operator[](size_t index) const;
 
-    bool isNull() const { return (typ == VNULL); }
     bool isStr() const { return (typ == VSTR); }
-    bool isNum() const { return (typ == VNUM); }
     bool isArray() const { return (typ == VARR); }
 
     bool push_back(const RLPValue& val);
@@ -74,18 +58,6 @@ public:
     bool push_back(const char *val_) {
         std::string s(val_);
         return push_back(s);
-    }
-    bool push_back(uint64_t val_) {
-        RLPValue tmpVal(val_);
-        return push_back(tmpVal);
-    }
-    bool push_back(int64_t val_) {
-        RLPValue tmpVal(val_);
-        return push_back(tmpVal);
-    }
-    bool push_back(int val_) {
-        RLPValue tmpVal(val_);
-        return push_back(tmpVal);
     }
     bool push_backV(const std::vector<RLPValue>& vec);
 
@@ -110,8 +82,6 @@ public:
     // value is of unexpected type
     const std::vector<RLPValue>& getValues() const;
     const std::string& get_str() const;
-    int get_int() const;
-    int64_t get_int64() const;
     const RLPValue& get_array() const;
 
     enum VType type() const { return getType(); }

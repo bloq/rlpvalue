@@ -14,52 +14,9 @@ const RLPValue NullRLPValue;
 
 void RLPValue::clear()
 {
-    typ = VNULL;
+    typ = VSTR;
     val.clear();
     values.clear();
-}
-
-bool RLPValue::setNull()
-{
-    clear();
-    return true;
-}
-
-static bool validNumStr(const std::string& s)
-{
-    std::string tokenVal;
-    unsigned int consumed;
-    enum jtokentype tt = getJsonToken(tokenVal, consumed, s.data(), s.data() + s.size());
-    return (tt == JTOK_NUMBER);
-}
-
-bool RLPValue::setNumStr(const std::string& val_)
-{
-    if (!validNumStr(val_))
-        return false;
-
-    clear();
-    typ = VNUM;
-    val = val_;
-    return true;
-}
-
-bool RLPValue::setInt(uint64_t val_)
-{
-    std::ostringstream oss;
-
-    oss << val_;
-
-    return setNumStr(oss.str());
-}
-
-bool RLPValue::setInt(int64_t val_)
-{
-    std::ostringstream oss;
-
-    oss << val_;
-
-    return setNumStr(oss.str());
 }
 
 bool RLPValue::setStr(const std::string& val_)
@@ -109,10 +66,8 @@ const RLPValue& RLPValue::operator[](size_t index) const
 const char *uvTypeName(RLPValue::VType t)
 {
     switch (t) {
-    case RLPValue::VNULL: return "null";
     case RLPValue::VARR: return "array";
     case RLPValue::VSTR: return "string";
-    case RLPValue::VNUM: return "number";
     }
 
     // not reached

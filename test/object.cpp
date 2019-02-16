@@ -37,35 +37,12 @@ BOOST_FIXTURE_TEST_SUITE(univalue_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(univalue_constructor)
 {
-    RLPValue v1;
-    BOOST_CHECK(v1.isNull());
-
     RLPValue v2(RLPValue::VSTR);
     BOOST_CHECK(v2.isStr());
 
     RLPValue v3(RLPValue::VSTR, "foo");
     BOOST_CHECK(v3.isStr());
     BOOST_CHECK_EQUAL(v3.getValStr(), "foo");
-
-    RLPValue numTest;
-    BOOST_CHECK(numTest.setNumStr("82"));
-    BOOST_CHECK(numTest.isNum());
-    BOOST_CHECK_EQUAL(numTest.getValStr(), "82");
-
-    uint64_t vu64 = 82;
-    RLPValue v4(vu64);
-    BOOST_CHECK(v4.isNum());
-    BOOST_CHECK_EQUAL(v4.getValStr(), "82");
-
-    int64_t vi64 = -82;
-    RLPValue v5(vi64);
-    BOOST_CHECK(v5.isNum());
-    BOOST_CHECK_EQUAL(v5.getValStr(), "-82");
-
-    int vi = -688;
-    RLPValue v6(vi);
-    BOOST_CHECK(v6.isNum());
-    BOOST_CHECK_EQUAL(v6.getValStr(), "-688");
 
     std::string vs("yawn");
     RLPValue v8(vs);
@@ -80,40 +57,16 @@ BOOST_AUTO_TEST_CASE(univalue_constructor)
 
 BOOST_AUTO_TEST_CASE(univalue_typecheck)
 {
-    RLPValue v1;
-    BOOST_CHECK(v1.setNumStr("1"));
-    BOOST_CHECK(v1.isNum());
-
-    RLPValue v3;
-    BOOST_CHECK(v3.setNumStr("32482348723847471234"));
-    BOOST_CHECK_THROW(v3.get_int64(), std::runtime_error);
-    BOOST_CHECK(v3.setNumStr("1000"));
-    BOOST_CHECK_EQUAL(v3.get_int64(), 1000);
-
-    RLPValue v4;
-    BOOST_CHECK(v4.setNumStr("2147483648"));
-    BOOST_CHECK_EQUAL(v4.get_int64(), 2147483648);
-    BOOST_CHECK_THROW(v4.get_int(), std::runtime_error);
-    BOOST_CHECK(v4.setNumStr("1000"));
-    BOOST_CHECK_EQUAL(v4.get_int(), 1000);
-    BOOST_CHECK_THROW(v4.get_str(), std::runtime_error);
-    BOOST_CHECK_THROW(v4.get_array(), std::runtime_error);
-    BOOST_CHECK_THROW(v4.getValues(), std::runtime_error);
-
     RLPValue v5;
     BOOST_CHECK(v5.read("[true, 10]"));
     BOOST_CHECK_NO_THROW(v5.get_array());
     std::vector<RLPValue> vals = v5.getValues();
-    BOOST_CHECK_THROW(vals[0].get_int(), std::runtime_error);
-
-    BOOST_CHECK_EQUAL(vals[1].get_int(), 10);
 }
 
 BOOST_AUTO_TEST_CASE(univalue_set)
 {
     RLPValue v(RLPValue::VSTR, "foo");
     v.clear();
-    BOOST_CHECK(v.isNull());
     BOOST_CHECK_EQUAL(v.getValStr(), "");
 
     BOOST_CHECK(v.setArray());
@@ -123,41 +76,19 @@ BOOST_AUTO_TEST_CASE(univalue_set)
     BOOST_CHECK(v.setStr("zum"));
     BOOST_CHECK(v.isStr());
     BOOST_CHECK_EQUAL(v.getValStr(), "zum");
-
-    BOOST_CHECK(v.setInt((int)1023));
-    BOOST_CHECK(v.isNum());
-    BOOST_CHECK_EQUAL(v.getValStr(), "1023");
-
-    BOOST_CHECK(v.setInt((int64_t)-1023LL));
-    BOOST_CHECK(v.isNum());
-    BOOST_CHECK_EQUAL(v.getValStr(), "-1023");
-
-    BOOST_CHECK(v.setInt((uint64_t)1023ULL));
-    BOOST_CHECK(v.isNum());
-    BOOST_CHECK_EQUAL(v.getValStr(), "1023");
-
-    BOOST_CHECK(v.setNumStr("-688"));
-    BOOST_CHECK(v.isNum());
-    BOOST_CHECK_EQUAL(v.getValStr(), "-688");
-
-    BOOST_CHECK(!v.setNumStr("zombocom"));
-
-    BOOST_CHECK(v.setNull());
-    BOOST_CHECK(v.isNull());
 }
 
 BOOST_AUTO_TEST_CASE(univalue_array)
 {
     RLPValue arr(RLPValue::VARR);
 
-    RLPValue v((int64_t)1023LL);
-    BOOST_CHECK(arr.push_back(v));
-
     std::string vStr("zippy");
     BOOST_CHECK(arr.push_back(vStr));
 
     const char *s = "pippy";
     BOOST_CHECK(arr.push_back(s));
+
+    RLPValue v;
 
     std::vector<RLPValue> vec;
     v.setStr("boing");
@@ -167,10 +98,6 @@ BOOST_AUTO_TEST_CASE(univalue_array)
     vec.push_back(v);
 
     BOOST_CHECK(arr.push_backV(vec));
-
-    BOOST_CHECK(arr.push_back((uint64_t) 400ULL));
-    BOOST_CHECK(arr.push_back((int64_t) -400LL));
-    BOOST_CHECK(arr.push_back((int) -401));
 
     BOOST_CHECK_EQUAL(arr.empty(), false);
     BOOST_CHECK_EQUAL(arr.size(), 9);

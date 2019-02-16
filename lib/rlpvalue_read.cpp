@@ -370,20 +370,6 @@ bool RLPValue::read(const char *raw, size_t size)
             break;
             }
 
-        case JTOK_NUMBER: {
-            RLPValue tmpVal(VNUM, tokenVal);
-            if (!stack.size()) {
-                *this = tmpVal;
-                break;
-            }
-
-            RLPValue *top = stack.back();
-            top->values.push_back(tmpVal);
-
-            setExpect(NOT_VALUE);
-            break;
-            }
-
         case JTOK_STRING: {
             RLPValue tmpVal(VSTR, tokenVal);
             if (!stack.size()) {
