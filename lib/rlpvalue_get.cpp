@@ -22,9 +22,9 @@ const std::vector<RLPValue>& RLPValue::getValues() const
     return values;
 }
 
-const std::string& RLPValue::get_str() const
+std::string RLPValue::get_str() const
 {
-    if (typ != VSTR)
+    if (typ != VBUF)
         throw std::runtime_error("JSON value is not a string as expected");
     return getValStr();
 }

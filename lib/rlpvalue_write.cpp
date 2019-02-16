@@ -9,33 +9,76 @@
 std::string RLPValue::write() const
 {
     std::string s;
-    s.reserve(64);
 
     switch (typ) {
     case VARR:
         writeArray(s);
         break;
-    case VSTR:
-        writeString(s);
+    case VBUF:
+        writeBuffer(s);
         break;
     }
 
     return s;
 }
 
-void RLPValue::writeString(std::string& s) const
+static std::string encodeBinary(uint64_t n)
 {
-	s += val;
+	std::string rs;
+
+	if (n == 0) {
+		// do nothing; return empty string
+	} else {
+		rs.assign(encodeBinary(n / 256));
+
+		unsigned char ch = n % 256;
+		rs.append((const char *) &ch, 1);
+	}
+
+	return rs;
+}
+
+static std::string encodeLength(size_t n, unsigned char offset)
+{
+	std::string rs;
+
+	if (n < 56) {
+		unsigned char ch = n + offset;
+		rs.assign((const char *) &ch, 1);
+	}
+
+	else {
+		// assert(n too big);
+
+		std::string binlen = encodeBinary(n);
+		rs.append(binlen);
+
+		unsigned char ch = binlen.size() + offset + 55;
+		rs.assign((const char *) &ch, 1);
+	}
+
+	return rs;
+}
+
+void RLPValue::writeBuffer(std::string& s) const
+{
+	const unsigned char *p = val.size() ? val.get() : nullptr;
+	size_t sz = val.size();
+
+	if ((sz == 1) && (p[0] < 0x80))
+		s.append((const char *) p, 1);
+	else
+		s += encodeLength(sz, 0x80) + val.toStr();
 }
 
 void RLPValue::writeArray(std::string& s) const
 {
-    s += "[";
-
-    for (unsigned int i = 0; i < values.size(); i++) {
-        s += values[i].write();
+    std::string tmp;
+    for (auto it = values.begin(); it != values.end(); it++) {
+	const RLPValue& val = *it;
+        tmp += val.write();
     }
 
-    s += "]";
+    s += encodeLength(tmp.size(), 0xC0) + tmp;
 }
 

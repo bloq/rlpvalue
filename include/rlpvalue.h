@@ -16,43 +16,68 @@
 
 #include <utility>        // std::pair
 
+// really, a generic buffer, but we are in the global namespace, hence a prefix
+class RLPBuffer {
+public:
+	std::vector<unsigned char>	data;
+
+	RLPBuffer() {}
+	RLPBuffer(const RLPBuffer& other) : data(other.data) {}
+
+	void clear() { data.clear(); }
+	void reserve(size_t n) { data.reserve(n); }
+	void push_back(unsigned char ch) { data.push_back(ch); }
+
+	std::vector<unsigned char>::iterator begin() { return data.begin(); }
+	std::vector<unsigned char>::iterator end() { return data.end(); }
+
+	const unsigned char *get() const { return &data[0]; }
+	size_t size() const { return data.size(); }
+	std::string toStr() const {
+		std::string rs((const char *) &data[0], data.size());
+		return rs;
+	}
+};
+
+// a single RLP value... which could be a nested list of RLP values
 class RLPValue {
 public:
-    enum VType { VARR, VSTR, };
+    enum VType { VARR, VBUF, };
 
-    RLPValue() { typ = VSTR; }
-    RLPValue(RLPValue::VType initialType, const std::string& initialStr = "") {
+    RLPValue() { typ = VBUF; }
+    RLPValue(RLPValue::VType initialType) {
         typ = initialType;
-        val = initialStr;
     }
     RLPValue(const std::string& val_) {
-        setStr(val_);
+        assign(val_);
     }
     RLPValue(const char *val_) {
         std::string s(val_);
-        setStr(s);
+        assign(s);
     }
     ~RLPValue() {}
 
     void clear();
 
-    bool setStr(const std::string& val);
+    void assign(const std::string& val);
+
     bool setArray();
 
     enum VType getType() const { return typ; }
-    const std::string& getValStr() const { return val; }
+    std::string getValStr() const { return val.toStr(); }
     bool empty() const { return (values.size() == 0); }
 
     size_t size() const { return values.size(); }
 
     const RLPValue& operator[](size_t index) const;
 
-    bool isStr() const { return (typ == VSTR); }
+    bool isBuffer() const { return (typ == VBUF); }
     bool isArray() const { return (typ == VARR); }
 
     bool push_back(const RLPValue& val);
     bool push_back(const std::string& val_) {
-        RLPValue tmpVal(VSTR, val_);
+        RLPValue tmpVal;
+	tmpVal.assign(val_);
         return push_back(tmpVal);
     }
     bool push_back(const char *val_) {
@@ -71,17 +96,17 @@ public:
 
 private:
     RLPValue::VType typ;
-    std::string val;                       // numbers are stored as C++ strings
+    RLPBuffer val;
     std::vector<RLPValue> values;
 
-    void writeString(std::string& s) const;
+    void writeBuffer(std::string& s) const;
     void writeArray(std::string& s) const;
 
 public:
     // Strict type-specific getters, these throw std::runtime_error if the
     // value is of unexpected type
     const std::vector<RLPValue>& getValues() const;
-    const std::string& get_str() const;
+    std::string get_str() const;
     const RLPValue& get_array() const;
 
     enum VType type() const { return getType(); }

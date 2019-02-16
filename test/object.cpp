@@ -33,29 +33,30 @@
 	} \
     }
 
-BOOST_FIXTURE_TEST_SUITE(univalue_tests, BasicTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(rlpvalue_tests, BasicTestingSetup)
 
-BOOST_AUTO_TEST_CASE(univalue_constructor)
+BOOST_AUTO_TEST_CASE(rlpvalue_constructor)
 {
-    RLPValue v2(RLPValue::VSTR);
-    BOOST_CHECK(v2.isStr());
+    RLPValue v2(RLPValue::VBUF);
+    BOOST_CHECK(v2.isBuffer());
 
-    RLPValue v3(RLPValue::VSTR, "foo");
-    BOOST_CHECK(v3.isStr());
+    RLPValue v3(RLPValue::VBUF);
+    v2.assign("foo");
+    BOOST_CHECK(v3.isBuffer());
     BOOST_CHECK_EQUAL(v3.getValStr(), "foo");
 
     std::string vs("yawn");
     RLPValue v8(vs);
-    BOOST_CHECK(v8.isStr());
+    BOOST_CHECK(v8.isBuffer());
     BOOST_CHECK_EQUAL(v8.getValStr(), "yawn");
 
     const char *vcs = "zappa";
     RLPValue v9(vcs);
-    BOOST_CHECK(v9.isStr());
+    BOOST_CHECK(v9.isBuffer());
     BOOST_CHECK_EQUAL(v9.getValStr(), "zappa");
 }
 
-BOOST_AUTO_TEST_CASE(univalue_typecheck)
+BOOST_AUTO_TEST_CASE(rlpvalue_typecheck)
 {
     RLPValue v5;
     BOOST_CHECK(v5.read("[true, 10]"));
@@ -63,9 +64,9 @@ BOOST_AUTO_TEST_CASE(univalue_typecheck)
     std::vector<RLPValue> vals = v5.getValues();
 }
 
-BOOST_AUTO_TEST_CASE(univalue_set)
+BOOST_AUTO_TEST_CASE(rlpvalue_set)
 {
-    RLPValue v(RLPValue::VSTR, "foo");
+    RLPValue v("foo");
     v.clear();
     BOOST_CHECK_EQUAL(v.getValStr(), "");
 
@@ -73,12 +74,12 @@ BOOST_AUTO_TEST_CASE(univalue_set)
     BOOST_CHECK(v.isArray());
     BOOST_CHECK_EQUAL(v.size(), 0);
 
-    BOOST_CHECK(v.setStr("zum"));
-    BOOST_CHECK(v.isStr());
+    v.assign("zum");
+    BOOST_CHECK(v.isBuffer());
     BOOST_CHECK_EQUAL(v.getValStr(), "zum");
 }
 
-BOOST_AUTO_TEST_CASE(univalue_array)
+BOOST_AUTO_TEST_CASE(rlpvalue_array)
 {
     RLPValue arr(RLPValue::VARR);
 
@@ -91,10 +92,10 @@ BOOST_AUTO_TEST_CASE(univalue_array)
     RLPValue v;
 
     std::vector<RLPValue> vec;
-    v.setStr("boing");
+    v.assign("boing");
     vec.push_back(v);
 
-    v.setStr("going");
+    v.assign("going");
     vec.push_back(v);
 
     BOOST_CHECK(arr.push_backV(vec));
@@ -121,7 +122,7 @@ BOOST_AUTO_TEST_CASE(univalue_array)
 static const char *json1 =
 "[1.10000000,{\"key1\":\"str\\u0000\",\"key2\":800,\"key3\":{\"name\":\"martian http://test.com\"}}]";
 
-BOOST_AUTO_TEST_CASE(univalue_readwrite)
+BOOST_AUTO_TEST_CASE(rlpvalue_readwrite)
 {
     RLPValue v;
     BOOST_CHECK(v.read(json1));
@@ -158,11 +159,11 @@ BOOST_AUTO_TEST_SUITE_END()
 
 int main (int argc, char *argv[])
 {
-    univalue_constructor();
-    univalue_typecheck();
-    univalue_set();
-    univalue_array();
-    univalue_readwrite();
+    rlpvalue_constructor();
+    rlpvalue_typecheck();
+    rlpvalue_set();
+    rlpvalue_array();
+    rlpvalue_readwrite();
     return 0;
 }
 

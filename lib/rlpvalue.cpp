@@ -14,17 +14,20 @@ const RLPValue NullRLPValue;
 
 void RLPValue::clear()
 {
-    typ = VSTR;
+    typ = VBUF;
     val.clear();
     values.clear();
 }
 
-bool RLPValue::setStr(const std::string& val_)
+void RLPValue::assign(const std::string& s)
 {
     clear();
-    typ = VSTR;
-    val = val_;
-    return true;
+
+    val.reserve(s.size());
+
+    for (auto it = s.begin(); it != s.end(); it++) {
+        val.push_back((unsigned char) *it);
+    }
 }
 
 bool RLPValue::setArray()
@@ -67,7 +70,7 @@ const char *uvTypeName(RLPValue::VType t)
 {
     switch (t) {
     case RLPValue::VARR: return "array";
-    case RLPValue::VSTR: return "string";
+    case RLPValue::VBUF: return "buffer";
     }
 
     // not reached

@@ -371,7 +371,7 @@ bool RLPValue::read(const char *raw, size_t size)
             }
 
         case JTOK_STRING: {
-            RLPValue tmpVal(VSTR, tokenVal);
+            RLPValue tmpVal(tokenVal);
             if (!stack.size()) {
                 *this = tmpVal;
                 break;

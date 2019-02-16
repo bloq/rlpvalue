@@ -27,6 +27,11 @@ AC_CONFIG_MACRO_DIR([build-aux/m4])
 AC_CONFIG_HEADERS([rlpvalue-config.h])
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 
+dnl Require C++11 compiler (no GNU extensions)
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory], [nodefault])
+AC_LANG(C++)
+
 LIBRLPVALUE_MAJOR_VERSION=librlpvalue_major_version
 LIBRLPVALUE_MINOR_VERSION=librlpvalue_minor_version
 LIBRLPVALUE_MICRO_VERSION=librlpvalue_micro_version
