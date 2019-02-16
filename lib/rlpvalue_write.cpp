@@ -39,9 +39,6 @@ std::string RLPValue::write(unsigned int prettyIndent,
     case VNULL:
         s += "null";
         break;
-    case VOBJ:
-        writeObject(prettyIndent, modIndent, s);
-        break;
     case VARR:
         writeArray(prettyIndent, modIndent, s);
         break;
@@ -84,29 +81,5 @@ void RLPValue::writeArray(unsigned int prettyIndent, unsigned int indentLevel, s
     if (prettyIndent)
         indentStr(prettyIndent, indentLevel - 1, s);
     s += "]";
-}
-
-void RLPValue::writeObject(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const
-{
-    s += "{";
-    if (prettyIndent)
-        s += "\n";
-
-    for (unsigned int i = 0; i < keys.size(); i++) {
-        if (prettyIndent)
-            indentStr(prettyIndent, indentLevel, s);
-        s += "\"" + json_escape(keys[i]) + "\":";
-        if (prettyIndent)
-            s += " ";
-        s += values.at(i).write(prettyIndent, indentLevel + 1);
-        if (i != (values.size() - 1))
-            s += ",";
-        if (prettyIndent)
-            s += "\n";
-    }
-
-    if (prettyIndent)
-        indentStr(prettyIndent, indentLevel - 1, s);
-    s += "}";
 }
 

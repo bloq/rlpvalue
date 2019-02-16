@@ -305,14 +305,10 @@ bool RLPValue::read(const char *raw, size_t size)
 
         switch (tok) {
 
-        case JTOK_OBJ_OPEN:
         case JTOK_ARR_OPEN: {
-            VType utyp = (tok == JTOK_OBJ_OPEN ? VOBJ : VARR);
+            VType utyp = VARR;
             if (!stack.size()) {
-                if (utyp == VOBJ)
-                    setObject();
-                else
-                    setArray();
+                setArray();
                 stack.push_back(this);
             } else {
                 RLPValue tmpVal(utyp);
@@ -323,19 +319,15 @@ bool RLPValue::read(const char *raw, size_t size)
                 stack.push_back(newTop);
             }
 
-            if (utyp == VOBJ)
-                setExpect(OBJ_NAME);
-            else
-                setExpect(ARR_VALUE);
+            setExpect(ARR_VALUE);
             break;
             }
 
-        case JTOK_OBJ_CLOSE:
         case JTOK_ARR_CLOSE: {
             if (!stack.size() || (last_tok == JTOK_COMMA))
                 goto return_fail;
 
-            VType utyp = (tok == JTOK_OBJ_CLOSE ? VOBJ : VARR);
+            VType utyp = VARR;
             RLPValue *top = stack.back();
             if (utyp != top->getType())
                 goto return_fail;
@@ -346,28 +338,12 @@ bool RLPValue::read(const char *raw, size_t size)
             break;
             }
 
-        case JTOK_COLON: {
-            if (!stack.size())
-                goto return_fail;
-
-            RLPValue *top = stack.back();
-            if (top->getType() != VOBJ)
-                goto return_fail;
-
-            setExpect(VALUE);
-            break;
-            }
-
         case JTOK_COMMA: {
             if (!stack.size() ||
                 (last_tok == JTOK_COMMA) || (last_tok == JTOK_ARR_OPEN))
                 goto return_fail;
 
-            RLPValue *top = stack.back();
-            if (top->getType() == VOBJ)
-                setExpect(OBJ_NAME);
-            else
-                setExpect(ARR_VALUE);
+            setExpect(ARR_VALUE);
             break;
             }
 
@@ -415,20 +391,13 @@ bool RLPValue::read(const char *raw, size_t size)
             }
 
         case JTOK_STRING: {
-            if (expect(OBJ_NAME)) {
-                RLPValue *top = stack.back();
-                top->keys.push_back(tokenVal);
-                clearExpect(OBJ_NAME);
-                setExpect(COLON);
-            } else {
-                RLPValue tmpVal(VSTR, tokenVal);
-                if (!stack.size()) {
-                    *this = tmpVal;
-                    break;
-                }
-                RLPValue *top = stack.back();
-                top->values.push_back(tmpVal);
+            RLPValue tmpVal(VSTR, tokenVal);
+            if (!stack.size()) {
+                *this = tmpVal;
+                break;
             }
+            RLPValue *top = stack.back();
+            top->values.push_back(tmpVal);
 
             setExpect(NOT_VALUE);
             break;

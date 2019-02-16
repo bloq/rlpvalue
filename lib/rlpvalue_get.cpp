@@ -74,16 +74,9 @@ bool ParseDouble(const std::string& str, double *out)
 }
 }
 
-const std::vector<std::string>& RLPValue::getKeys() const
-{
-    if (typ != VOBJ)
-        throw std::runtime_error("JSON value is not an object as expected");
-    return keys;
-}
-
 const std::vector<RLPValue>& RLPValue::getValues() const
 {
-    if (typ != VOBJ && typ != VARR)
+    if (typ != VARR)
         throw std::runtime_error("JSON value is not an object or array as expected");
     return values;
 }
@@ -130,13 +123,6 @@ double RLPValue::get_real() const
     if (!ParseDouble(getValStr(), &retval))
         throw std::runtime_error("JSON double out of range");
     return retval;
-}
-
-const RLPValue& RLPValue::get_obj() const
-{
-    if (typ != VOBJ)
-        throw std::runtime_error("JSON value is not an object as expected");
-    return *this;
 }
 
 const RLPValue& RLPValue::get_array() const

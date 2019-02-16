@@ -16,7 +16,6 @@ void RLPValue::clear()
 {
     typ = VNULL;
     val.clear();
-    keys.clear();
     values.clear();
 }
 
@@ -98,13 +97,6 @@ bool RLPValue::setArray()
     return true;
 }
 
-bool RLPValue::setObject()
-{
-    clear();
-    typ = VOBJ;
-    return true;
-}
-
 bool RLPValue::push_back(const RLPValue& val_)
 {
     if (typ != VARR)
@@ -124,91 +116,9 @@ bool RLPValue::push_backV(const std::vector<RLPValue>& vec)
     return true;
 }
 
-void RLPValue::__pushKV(const std::string& key, const RLPValue& val_)
-{
-    keys.push_back(key);
-    values.push_back(val_);
-}
-
-bool RLPValue::pushKV(const std::string& key, const RLPValue& val_)
-{
-    if (typ != VOBJ)
-        return false;
-
-    size_t idx;
-    if (findKey(key, idx))
-        values[idx] = val_;
-    else
-        __pushKV(key, val_);
-    return true;
-}
-
-bool RLPValue::pushKVs(const RLPValue& obj)
-{
-    if (typ != VOBJ || obj.typ != VOBJ)
-        return false;
-
-    for (size_t i = 0; i < obj.keys.size(); i++)
-        __pushKV(obj.keys[i], obj.values.at(i));
-
-    return true;
-}
-
-void RLPValue::getObjMap(std::map<std::string,RLPValue>& kv) const
-{
-    if (typ != VOBJ)
-        return;
-
-    kv.clear();
-    for (size_t i = 0; i < keys.size(); i++)
-        kv[keys[i]] = values[i];
-}
-
-bool RLPValue::findKey(const std::string& key, size_t& retIdx) const
-{
-    for (size_t i = 0; i < keys.size(); i++) {
-        if (keys[i] == key) {
-            retIdx = i;
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool RLPValue::checkObject(const std::map<std::string,RLPValue::VType>& t) const
-{
-    if (typ != VOBJ)
-        return false;
-
-    for (std::map<std::string,RLPValue::VType>::const_iterator it = t.begin();
-         it != t.end(); ++it) {
-        size_t idx = 0;
-        if (!findKey(it->first, idx))
-            return false;
-
-        if (values.at(idx).getType() != it->second)
-            return false;
-    }
-
-    return true;
-}
-
-const RLPValue& RLPValue::operator[](const std::string& key) const
-{
-    if (typ != VOBJ)
-        return NullRLPValue;
-
-    size_t index = 0;
-    if (!findKey(key, index))
-        return NullRLPValue;
-
-    return values.at(index);
-}
-
 const RLPValue& RLPValue::operator[](size_t index) const
 {
-    if (typ != VOBJ && typ != VARR)
+    if (typ != VARR)
         return NullRLPValue;
     if (index >= values.size())
         return NullRLPValue;
@@ -221,7 +131,6 @@ const char *uvTypeName(RLPValue::VType t)
     switch (t) {
     case RLPValue::VNULL: return "null";
     case RLPValue::VBOOL: return "bool";
-    case RLPValue::VOBJ: return "object";
     case RLPValue::VARR: return "array";
     case RLPValue::VSTR: return "string";
     case RLPValue::VNUM: return "number";
@@ -229,14 +138,5 @@ const char *uvTypeName(RLPValue::VType t)
 
     // not reached
     return NULL;
-}
-
-const RLPValue& find_value(const RLPValue& obj, const std::string& name)
-{
-    for (unsigned int i = 0; i < obj.keys.size(); i++)
-        if (obj.keys[i] == name)
-            return obj.values.at(i);
-
-    return NullRLPValue;
 }
 

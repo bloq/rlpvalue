@@ -110,9 +110,7 @@ BOOST_AUTO_TEST_CASE(univalue_typecheck)
     BOOST_CHECK_THROW(v4.get_str(), std::runtime_error);
     BOOST_CHECK_EQUAL(v4.get_real(), 1000);
     BOOST_CHECK_THROW(v4.get_array(), std::runtime_error);
-    BOOST_CHECK_THROW(v4.getKeys(), std::runtime_error);
     BOOST_CHECK_THROW(v4.getValues(), std::runtime_error);
-    BOOST_CHECK_THROW(v4.get_obj(), std::runtime_error);
 
     RLPValue v5;
     BOOST_CHECK(v5.read("[true, 10]"));
@@ -131,12 +129,6 @@ BOOST_AUTO_TEST_CASE(univalue_set)
     v.clear();
     BOOST_CHECK(v.isNull());
     BOOST_CHECK_EQUAL(v.getValStr(), "");
-
-    BOOST_CHECK(v.setObject());
-    BOOST_CHECK(v.isObject());
-    BOOST_CHECK_EQUAL(v.size(), 0);
-    BOOST_CHECK_EQUAL(v.getType(), RLPValue::VOBJ);
-    BOOST_CHECK(v.empty());
 
     BOOST_CHECK(v.setArray());
     BOOST_CHECK(v.isArray());
@@ -231,122 +223,6 @@ BOOST_AUTO_TEST_CASE(univalue_array)
     BOOST_CHECK_EQUAL(arr.size(), 0);
 }
 
-BOOST_AUTO_TEST_CASE(univalue_object)
-{
-    RLPValue obj(RLPValue::VOBJ);
-    std::string strKey, strVal;
-    RLPValue v;
-
-    strKey = "age";
-    v.setInt(100);
-    BOOST_CHECK(obj.pushKV(strKey, v));
-
-    strKey = "first";
-    strVal = "John";
-    BOOST_CHECK(obj.pushKV(strKey, strVal));
-
-    strKey = "last";
-    const char *cVal = "Smith";
-    BOOST_CHECK(obj.pushKV(strKey, cVal));
-
-    strKey = "distance";
-    BOOST_CHECK(obj.pushKV(strKey, (int64_t) 25));
-
-    strKey = "time";
-    BOOST_CHECK(obj.pushKV(strKey, (uint64_t) 3600));
-
-    strKey = "calories";
-    BOOST_CHECK(obj.pushKV(strKey, (int) 12));
-
-    strKey = "temperature";
-    BOOST_CHECK(obj.pushKV(strKey, (double) 90.012));
-
-    strKey = "moon";
-    BOOST_CHECK(obj.pushKV(strKey, true));
-
-    strKey = "spoon";
-    BOOST_CHECK(obj.pushKV(strKey, false));
-
-    RLPValue obj2(RLPValue::VOBJ);
-    BOOST_CHECK(obj2.pushKV("cat1", 9000));
-    BOOST_CHECK(obj2.pushKV("cat2", 12345));
-
-    BOOST_CHECK(obj.pushKVs(obj2));
-
-    BOOST_CHECK_EQUAL(obj.empty(), false);
-    BOOST_CHECK_EQUAL(obj.size(), 11);
-
-    BOOST_CHECK_EQUAL(obj["age"].getValStr(), "100");
-    BOOST_CHECK_EQUAL(obj["first"].getValStr(), "John");
-    BOOST_CHECK_EQUAL(obj["last"].getValStr(), "Smith");
-    BOOST_CHECK_EQUAL(obj["distance"].getValStr(), "25");
-    BOOST_CHECK_EQUAL(obj["time"].getValStr(), "3600");
-    BOOST_CHECK_EQUAL(obj["calories"].getValStr(), "12");
-    BOOST_CHECK_EQUAL(obj["temperature"].getValStr(), "90.012");
-    BOOST_CHECK_EQUAL(obj["moon"].getValStr(), "1");
-    BOOST_CHECK_EQUAL(obj["spoon"].getValStr(), "");
-    BOOST_CHECK_EQUAL(obj["cat1"].getValStr(), "9000");
-    BOOST_CHECK_EQUAL(obj["cat2"].getValStr(), "12345");
-
-    BOOST_CHECK_EQUAL(obj["nyuknyuknyuk"].getValStr(), "");
-
-    BOOST_CHECK(obj.exists("age"));
-    BOOST_CHECK(obj.exists("first"));
-    BOOST_CHECK(obj.exists("last"));
-    BOOST_CHECK(obj.exists("distance"));
-    BOOST_CHECK(obj.exists("time"));
-    BOOST_CHECK(obj.exists("calories"));
-    BOOST_CHECK(obj.exists("temperature"));
-    BOOST_CHECK(obj.exists("moon"));
-    BOOST_CHECK(obj.exists("spoon"));
-    BOOST_CHECK(obj.exists("cat1"));
-    BOOST_CHECK(obj.exists("cat2"));
-
-    BOOST_CHECK(!obj.exists("nyuknyuknyuk"));
-
-    std::map<std::string, RLPValue::VType> objTypes;
-    objTypes["age"] = RLPValue::VNUM;
-    objTypes["first"] = RLPValue::VSTR;
-    objTypes["last"] = RLPValue::VSTR;
-    objTypes["distance"] = RLPValue::VNUM;
-    objTypes["time"] = RLPValue::VNUM;
-    objTypes["calories"] = RLPValue::VNUM;
-    objTypes["temperature"] = RLPValue::VNUM;
-    objTypes["moon"] = RLPValue::VBOOL;
-    objTypes["spoon"] = RLPValue::VBOOL;
-    objTypes["cat1"] = RLPValue::VNUM;
-    objTypes["cat2"] = RLPValue::VNUM;
-    BOOST_CHECK(obj.checkObject(objTypes));
-
-    objTypes["cat2"] = RLPValue::VSTR;
-    BOOST_CHECK(!obj.checkObject(objTypes));
-
-    obj.clear();
-    BOOST_CHECK(obj.empty());
-    BOOST_CHECK_EQUAL(obj.size(), 0);
-    BOOST_CHECK_EQUAL(obj.getType(), RLPValue::VNULL);
-
-    BOOST_CHECK_EQUAL(obj.setObject(), true);
-    RLPValue uv;
-    uv.setInt(42);
-    obj.__pushKV("age", uv);
-    BOOST_CHECK_EQUAL(obj.size(), 1);
-    BOOST_CHECK_EQUAL(obj["age"].getValStr(), "42");
-
-    uv.setInt(43);
-    obj.pushKV("age", uv);
-    BOOST_CHECK_EQUAL(obj.size(), 1);
-    BOOST_CHECK_EQUAL(obj["age"].getValStr(), "43");
-
-    obj.pushKV("name", "foo bar");
-
-    std::map<std::string,RLPValue> kv;
-    obj.getObjMap(kv);
-    BOOST_CHECK_EQUAL(kv["age"].getValStr(), "43");
-    BOOST_CHECK_EQUAL(kv["name"].getValStr(), "foo bar");
-
-}
-
 static const char *json1 =
 "[1.10000000,{\"key1\":\"str\\u0000\",\"key2\":800,\"key3\":{\"name\":\"martian http://test.com\"}}]";
 
@@ -364,16 +240,7 @@ BOOST_AUTO_TEST_CASE(univalue_readwrite)
     BOOST_CHECK_EQUAL(v[0].getValStr(), "1.10000000");
 
     RLPValue obj = v[1];
-    BOOST_CHECK(obj.isObject());
     BOOST_CHECK_EQUAL(obj.size(), 3);
-
-    BOOST_CHECK(obj["key1"].isStr());
-    std::string correctValue("str");
-    correctValue.push_back('\0');
-    BOOST_CHECK_EQUAL(obj["key1"].getValStr(), correctValue);
-    BOOST_CHECK(obj["key2"].isNum());
-    BOOST_CHECK_EQUAL(obj["key2"].getValStr(), "800");
-    BOOST_CHECK(obj["key3"].isObject());
 
     BOOST_CHECK_EQUAL(strJson1, v.write());
 
@@ -382,7 +249,6 @@ BOOST_AUTO_TEST_CASE(univalue_readwrite)
        is, of course, exempt.  */
 
     BOOST_CHECK(v.read("  {}\n  "));
-    BOOST_CHECK(v.isObject());
     BOOST_CHECK(v.read("  []\n  "));
     BOOST_CHECK(v.isArray());
 
@@ -401,7 +267,6 @@ int main (int argc, char *argv[])
     univalue_typecheck();
     univalue_set();
     univalue_array();
-    univalue_object();
     univalue_readwrite();
     return 0;
 }
