@@ -25,15 +25,6 @@ bool RLPValue::setNull()
     return true;
 }
 
-bool RLPValue::setBool(bool val_)
-{
-    clear();
-    typ = VBOOL;
-    if (val_)
-        val = "1";
-    return true;
-}
-
 static bool validNumStr(const std::string& s)
 {
     std::string tokenVal;
@@ -69,17 +60,6 @@ bool RLPValue::setInt(int64_t val_)
     oss << val_;
 
     return setNumStr(oss.str());
-}
-
-bool RLPValue::setFloat(double val_)
-{
-    std::ostringstream oss;
-
-    oss << std::setprecision(16) << val_;
-
-    bool ret = setNumStr(oss.str());
-    typ = VNUM;
-    return ret;
 }
 
 bool RLPValue::setStr(const std::string& val_)
@@ -130,7 +110,6 @@ const char *uvTypeName(RLPValue::VType t)
 {
     switch (t) {
     case RLPValue::VNULL: return "null";
-    case RLPValue::VBOOL: return "bool";
     case RLPValue::VARR: return "array";
     case RLPValue::VSTR: return "string";
     case RLPValue::VNUM: return "number";

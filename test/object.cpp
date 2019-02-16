@@ -67,11 +67,6 @@ BOOST_AUTO_TEST_CASE(univalue_constructor)
     BOOST_CHECK(v6.isNum());
     BOOST_CHECK_EQUAL(v6.getValStr(), "-688");
 
-    double vd = -7.21;
-    RLPValue v7(vd);
-    BOOST_CHECK(v7.isNum());
-    BOOST_CHECK_EQUAL(v7.getValStr(), "-7.21");
-
     std::string vs("yawn");
     RLPValue v8(vs);
     BOOST_CHECK(v8.isStr());
@@ -88,12 +83,6 @@ BOOST_AUTO_TEST_CASE(univalue_typecheck)
     RLPValue v1;
     BOOST_CHECK(v1.setNumStr("1"));
     BOOST_CHECK(v1.isNum());
-    BOOST_CHECK_THROW(v1.get_bool(), std::runtime_error);
-
-    RLPValue v2;
-    BOOST_CHECK(v2.setBool(true));
-    BOOST_CHECK_EQUAL(v2.get_bool(), true);
-    BOOST_CHECK_THROW(v2.get_int(), std::runtime_error);
 
     RLPValue v3;
     BOOST_CHECK(v3.setNumStr("32482348723847471234"));
@@ -108,7 +97,6 @@ BOOST_AUTO_TEST_CASE(univalue_typecheck)
     BOOST_CHECK(v4.setNumStr("1000"));
     BOOST_CHECK_EQUAL(v4.get_int(), 1000);
     BOOST_CHECK_THROW(v4.get_str(), std::runtime_error);
-    BOOST_CHECK_EQUAL(v4.get_real(), 1000);
     BOOST_CHECK_THROW(v4.get_array(), std::runtime_error);
     BOOST_CHECK_THROW(v4.getValues(), std::runtime_error);
 
@@ -117,10 +105,8 @@ BOOST_AUTO_TEST_CASE(univalue_typecheck)
     BOOST_CHECK_NO_THROW(v5.get_array());
     std::vector<RLPValue> vals = v5.getValues();
     BOOST_CHECK_THROW(vals[0].get_int(), std::runtime_error);
-    BOOST_CHECK_EQUAL(vals[0].get_bool(), true);
 
     BOOST_CHECK_EQUAL(vals[1].get_int(), 10);
-    BOOST_CHECK_THROW(vals[1].get_bool(), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(univalue_set)
@@ -138,10 +124,6 @@ BOOST_AUTO_TEST_CASE(univalue_set)
     BOOST_CHECK(v.isStr());
     BOOST_CHECK_EQUAL(v.getValStr(), "zum");
 
-    BOOST_CHECK(v.setFloat(-1.01));
-    BOOST_CHECK(v.isNum());
-    BOOST_CHECK_EQUAL(v.getValStr(), "-1.01");
-
     BOOST_CHECK(v.setInt((int)1023));
     BOOST_CHECK(v.isNum());
     BOOST_CHECK_EQUAL(v.getValStr(), "1023");
@@ -157,18 +139,6 @@ BOOST_AUTO_TEST_CASE(univalue_set)
     BOOST_CHECK(v.setNumStr("-688"));
     BOOST_CHECK(v.isNum());
     BOOST_CHECK_EQUAL(v.getValStr(), "-688");
-
-    BOOST_CHECK(v.setBool(false));
-    BOOST_CHECK_EQUAL(v.isBool(), true);
-    BOOST_CHECK_EQUAL(v.isTrue(), false);
-    BOOST_CHECK_EQUAL(v.isFalse(), true);
-    BOOST_CHECK_EQUAL(v.getBool(), false);
-
-    BOOST_CHECK(v.setBool(true));
-    BOOST_CHECK_EQUAL(v.isBool(), true);
-    BOOST_CHECK_EQUAL(v.isTrue(), true);
-    BOOST_CHECK_EQUAL(v.isFalse(), false);
-    BOOST_CHECK_EQUAL(v.getBool(), true);
 
     BOOST_CHECK(!v.setNumStr("zombocom"));
 
@@ -201,7 +171,6 @@ BOOST_AUTO_TEST_CASE(univalue_array)
     BOOST_CHECK(arr.push_back((uint64_t) 400ULL));
     BOOST_CHECK(arr.push_back((int64_t) -400LL));
     BOOST_CHECK(arr.push_back((int) -401));
-    BOOST_CHECK(arr.push_back(-40.1));
 
     BOOST_CHECK_EQUAL(arr.empty(), false);
     BOOST_CHECK_EQUAL(arr.size(), 9);
@@ -214,7 +183,6 @@ BOOST_AUTO_TEST_CASE(univalue_array)
     BOOST_CHECK_EQUAL(arr[5].getValStr(), "400");
     BOOST_CHECK_EQUAL(arr[6].getValStr(), "-400");
     BOOST_CHECK_EQUAL(arr[7].getValStr(), "-401");
-    BOOST_CHECK_EQUAL(arr[8].getValStr(), "-40.1");
 
     BOOST_CHECK_EQUAL(arr[999].getValStr(), "");
 

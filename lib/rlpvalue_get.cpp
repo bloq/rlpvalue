@@ -58,20 +58,6 @@ bool ParseInt64(const std::string& str, int64_t *out)
         n >= std::numeric_limits<int64_t>::min() &&
         n <= std::numeric_limits<int64_t>::max();
 }
-
-bool ParseDouble(const std::string& str, double *out)
-{
-    if (!ParsePrechecks(str))
-        return false;
-    if (str.size() >= 2 && str[0] == '0' && str[1] == 'x') // No hexadecimal floats allowed
-        return false;
-    std::istringstream text(str);
-    text.imbue(std::locale::classic());
-    double result;
-    text >> result;
-    if(out) *out = result;
-    return text.eof() && !text.fail();
-}
 }
 
 const std::vector<RLPValue>& RLPValue::getValues() const
@@ -79,13 +65,6 @@ const std::vector<RLPValue>& RLPValue::getValues() const
     if (typ != VARR)
         throw std::runtime_error("JSON value is not an object or array as expected");
     return values;
-}
-
-bool RLPValue::get_bool() const
-{
-    if (typ != VBOOL)
-        throw std::runtime_error("JSON value is not a boolean as expected");
-    return getBool();
 }
 
 const std::string& RLPValue::get_str() const
@@ -112,16 +91,6 @@ int64_t RLPValue::get_int64() const
     int64_t retval;
     if (!ParseInt64(getValStr(), &retval))
         throw std::runtime_error("JSON integer out of range");
-    return retval;
-}
-
-double RLPValue::get_real() const
-{
-    if (typ != VNUM)
-        throw std::runtime_error("JSON value is not a number as expected");
-    double retval;
-    if (!ParseDouble(getValStr(), &retval))
-        throw std::runtime_error("JSON double out of range");
     return retval;
 }
 

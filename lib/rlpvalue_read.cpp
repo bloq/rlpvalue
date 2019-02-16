@@ -355,12 +355,6 @@ bool RLPValue::read(const char *raw, size_t size)
             case JTOK_KW_NULL:
                 // do nothing more
                 break;
-            case JTOK_KW_TRUE:
-                tmpVal.setBool(true);
-                break;
-            case JTOK_KW_FALSE:
-                tmpVal.setBool(false);
-                break;
             default: /* impossible */ break;
             }
 

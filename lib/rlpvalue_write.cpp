@@ -48,9 +48,6 @@ std::string RLPValue::write(unsigned int prettyIndent,
     case VNUM:
         s += val;
         break;
-    case VBOOL:
-        s += (val == "1" ? "true" : "false");
-        break;
     }
 
     return s;

@@ -18,7 +18,7 @@
 
 class RLPValue {
 public:
-    enum VType { VNULL, VARR, VSTR, VNUM, VBOOL, };
+    enum VType { VNULL, VARR, VSTR, VNUM, };
 
     RLPValue() { typ = VNULL; }
     RLPValue(RLPValue::VType initialType, const std::string& initialStr = "") {
@@ -31,14 +31,8 @@ public:
     RLPValue(int64_t val_) {
         setInt(val_);
     }
-    RLPValue(bool val_) {
-        setBool(val_);
-    }
     RLPValue(int val_) {
         setInt(val_);
-    }
-    RLPValue(double val_) {
-        setFloat(val_);
     }
     RLPValue(const std::string& val_) {
         setStr(val_);
@@ -52,12 +46,10 @@ public:
     void clear();
 
     bool setNull();
-    bool setBool(bool val);
     bool setNumStr(const std::string& val);
     bool setInt(uint64_t val);
     bool setInt(int64_t val);
     bool setInt(int val_) { return setInt((int64_t)val_); }
-    bool setFloat(double val);
     bool setStr(const std::string& val);
     bool setArray();
 
@@ -67,14 +59,10 @@ public:
 
     size_t size() const { return values.size(); }
 
-    bool getBool() const { return isTrue(); }
     void getObjMap(std::map<std::string,RLPValue>& kv) const;
     const RLPValue& operator[](size_t index) const;
 
     bool isNull() const { return (typ == VNULL); }
-    bool isTrue() const { return (typ == VBOOL) && (val == "1"); }
-    bool isFalse() const { return (typ == VBOOL) && (val != "1"); }
-    bool isBool() const { return (typ == VBOOL); }
     bool isStr() const { return (typ == VSTR); }
     bool isNum() const { return (typ == VNUM); }
     bool isArray() const { return (typ == VARR); }
@@ -97,10 +85,6 @@ public:
         return push_back(tmpVal);
     }
     bool push_back(int val_) {
-        RLPValue tmpVal(val_);
-        return push_back(tmpVal);
-    }
-    bool push_back(double val_) {
         RLPValue tmpVal(val_);
         return push_back(tmpVal);
     }
@@ -127,11 +111,9 @@ public:
     // Strict type-specific getters, these throw std::runtime_error if the
     // value is of unexpected type
     const std::vector<RLPValue>& getValues() const;
-    bool get_bool() const;
     const std::string& get_str() const;
     int get_int() const;
     int64_t get_int64() const;
-    double get_real() const;
     const RLPValue& get_array() const;
 
     enum VType type() const { return getType(); }
