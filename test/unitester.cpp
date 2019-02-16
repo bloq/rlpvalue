@@ -38,7 +38,7 @@ static void runtest(std::string filename, const std::string& jdata)
         bool wantRoundTrip = (prefix == "roun");
         assert(wantPass || wantFail);
 
-        UniValue val;
+        RLPValue val;
         bool testResult = val.read(jdata);
 
         if (wantPass) {
@@ -136,7 +136,7 @@ static const char *filenames[] = {
 // Test \u handling
 void unescape_unicode_test()
 {
-    UniValue val;
+    RLPValue val;
     bool testResult;
     // Escaped ASCII (quote)
     testResult = val.read("[\"\\u0022\"]");

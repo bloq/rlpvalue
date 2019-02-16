@@ -25,7 +25,7 @@ static std::string json_escape(const std::string& inS)
     return outS;
 }
 
-std::string UniValue::write(unsigned int prettyIndent,
+std::string RLPValue::write(unsigned int prettyIndent,
                             unsigned int indentLevel) const
 {
     std::string s;
@@ -64,7 +64,7 @@ static void indentStr(unsigned int prettyIndent, unsigned int indentLevel, std::
     s.append(prettyIndent * indentLevel, ' ');
 }
 
-void UniValue::writeArray(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const
+void RLPValue::writeArray(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const
 {
     s += "[";
     if (prettyIndent)
@@ -86,7 +86,7 @@ void UniValue::writeArray(unsigned int prettyIndent, unsigned int indentLevel, s
     s += "]";
 }
 
-void UniValue::writeObject(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const
+void RLPValue::writeObject(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const
 {
     s += "{";
     if (prettyIndent)

@@ -248,12 +248,12 @@ enum expect_bits {
 #define setExpect(bit) (expectMask |= EXP_##bit)
 #define clearExpect(bit) (expectMask &= ~EXP_##bit)
 
-bool UniValue::read(const char *raw, size_t size)
+bool RLPValue::read(const char *raw, size_t size)
 {
     clear();
 
     uint32_t expectMask = 0;
-    std::vector<UniValue*> stack;
+    std::vector<RLPValue*> stack;
 
     std::string tokenVal;
     unsigned int consumed;
@@ -315,11 +315,11 @@ bool UniValue::read(const char *raw, size_t size)
                     setArray();
                 stack.push_back(this);
             } else {
-                UniValue tmpVal(utyp);
-                UniValue *top = stack.back();
+                RLPValue tmpVal(utyp);
+                RLPValue *top = stack.back();
                 top->values.push_back(tmpVal);
 
-                UniValue *newTop = &(top->values.back());
+                RLPValue *newTop = &(top->values.back());
                 stack.push_back(newTop);
             }
 
@@ -336,7 +336,7 @@ bool UniValue::read(const char *raw, size_t size)
                 goto return_fail;
 
             VType utyp = (tok == JTOK_OBJ_CLOSE ? VOBJ : VARR);
-            UniValue *top = stack.back();
+            RLPValue *top = stack.back();
             if (utyp != top->getType())
                 goto return_fail;
 
@@ -350,7 +350,7 @@ bool UniValue::read(const char *raw, size_t size)
             if (!stack.size())
                 goto return_fail;
 
-            UniValue *top = stack.back();
+            RLPValue *top = stack.back();
             if (top->getType() != VOBJ)
                 goto return_fail;
 
@@ -363,7 +363,7 @@ bool UniValue::read(const char *raw, size_t size)
                 (last_tok == JTOK_COMMA) || (last_tok == JTOK_ARR_OPEN))
                 goto return_fail;
 
-            UniValue *top = stack.back();
+            RLPValue *top = stack.back();
             if (top->getType() == VOBJ)
                 setExpect(OBJ_NAME);
             else
@@ -374,7 +374,7 @@ bool UniValue::read(const char *raw, size_t size)
         case JTOK_KW_NULL:
         case JTOK_KW_TRUE:
         case JTOK_KW_FALSE: {
-            UniValue tmpVal;
+            RLPValue tmpVal;
             switch (tok) {
             case JTOK_KW_NULL:
                 // do nothing more
@@ -393,7 +393,7 @@ bool UniValue::read(const char *raw, size_t size)
                 break;
             }
 
-            UniValue *top = stack.back();
+            RLPValue *top = stack.back();
             top->values.push_back(tmpVal);
 
             setExpect(NOT_VALUE);
@@ -401,13 +401,13 @@ bool UniValue::read(const char *raw, size_t size)
             }
 
         case JTOK_NUMBER: {
-            UniValue tmpVal(VNUM, tokenVal);
+            RLPValue tmpVal(VNUM, tokenVal);
             if (!stack.size()) {
                 *this = tmpVal;
                 break;
             }
 
-            UniValue *top = stack.back();
+            RLPValue *top = stack.back();
             top->values.push_back(tmpVal);
 
             setExpect(NOT_VALUE);
@@ -416,17 +416,17 @@ bool UniValue::read(const char *raw, size_t size)
 
         case JTOK_STRING: {
             if (expect(OBJ_NAME)) {
-                UniValue *top = stack.back();
+                RLPValue *top = stack.back();
                 top->keys.push_back(tokenVal);
                 clearExpect(OBJ_NAME);
                 setExpect(COLON);
             } else {
-                UniValue tmpVal(VSTR, tokenVal);
+                RLPValue tmpVal(VSTR, tokenVal);
                 if (!stack.size()) {
                     *this = tmpVal;
                     break;
                 }
-                UniValue *top = stack.back();
+                RLPValue *top = stack.back();
                 top->values.push_back(tmpVal);
             }
 

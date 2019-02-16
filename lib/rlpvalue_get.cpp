@@ -74,35 +74,35 @@ bool ParseDouble(const std::string& str, double *out)
 }
 }
 
-const std::vector<std::string>& UniValue::getKeys() const
+const std::vector<std::string>& RLPValue::getKeys() const
 {
     if (typ != VOBJ)
         throw std::runtime_error("JSON value is not an object as expected");
     return keys;
 }
 
-const std::vector<UniValue>& UniValue::getValues() const
+const std::vector<RLPValue>& RLPValue::getValues() const
 {
     if (typ != VOBJ && typ != VARR)
         throw std::runtime_error("JSON value is not an object or array as expected");
     return values;
 }
 
-bool UniValue::get_bool() const
+bool RLPValue::get_bool() const
 {
     if (typ != VBOOL)
         throw std::runtime_error("JSON value is not a boolean as expected");
     return getBool();
 }
 
-const std::string& UniValue::get_str() const
+const std::string& RLPValue::get_str() const
 {
     if (typ != VSTR)
         throw std::runtime_error("JSON value is not a string as expected");
     return getValStr();
 }
 
-int UniValue::get_int() const
+int RLPValue::get_int() const
 {
     if (typ != VNUM)
         throw std::runtime_error("JSON value is not an integer as expected");
@@ -112,7 +112,7 @@ int UniValue::get_int() const
     return retval;
 }
 
-int64_t UniValue::get_int64() const
+int64_t RLPValue::get_int64() const
 {
     if (typ != VNUM)
         throw std::runtime_error("JSON value is not an integer as expected");
@@ -122,7 +122,7 @@ int64_t UniValue::get_int64() const
     return retval;
 }
 
-double UniValue::get_real() const
+double RLPValue::get_real() const
 {
     if (typ != VNUM)
         throw std::runtime_error("JSON value is not a number as expected");
@@ -132,14 +132,14 @@ double UniValue::get_real() const
     return retval;
 }
 
-const UniValue& UniValue::get_obj() const
+const RLPValue& RLPValue::get_obj() const
 {
     if (typ != VOBJ)
         throw std::runtime_error("JSON value is not an object as expected");
     return *this;
 }
 
-const UniValue& UniValue::get_array() const
+const RLPValue& RLPValue::get_array() const
 {
     if (typ != VARR)
         throw std::runtime_error("JSON value is not an array as expected");

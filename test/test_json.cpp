@@ -12,7 +12,7 @@ using namespace std;
 
 int main (int argc, char *argv[])
 {
-    UniValue val;
+    RLPValue val;
     if (val.read(string(istreambuf_iterator<char>(cin),
                         istreambuf_iterator<char>()))) {
         cout << val.write(1 /* prettyIndent */, 4 /* indentLevel */) << endl;

@@ -10,9 +10,9 @@
 
 #include "rlpvalue.h"
 
-const UniValue NullUniValue;
+const RLPValue NullRLPValue;
 
-void UniValue::clear()
+void RLPValue::clear()
 {
     typ = VNULL;
     val.clear();
@@ -20,13 +20,13 @@ void UniValue::clear()
     values.clear();
 }
 
-bool UniValue::setNull()
+bool RLPValue::setNull()
 {
     clear();
     return true;
 }
 
-bool UniValue::setBool(bool val_)
+bool RLPValue::setBool(bool val_)
 {
     clear();
     typ = VBOOL;
@@ -43,7 +43,7 @@ static bool validNumStr(const std::string& s)
     return (tt == JTOK_NUMBER);
 }
 
-bool UniValue::setNumStr(const std::string& val_)
+bool RLPValue::setNumStr(const std::string& val_)
 {
     if (!validNumStr(val_))
         return false;
@@ -54,7 +54,7 @@ bool UniValue::setNumStr(const std::string& val_)
     return true;
 }
 
-bool UniValue::setInt(uint64_t val_)
+bool RLPValue::setInt(uint64_t val_)
 {
     std::ostringstream oss;
 
@@ -63,7 +63,7 @@ bool UniValue::setInt(uint64_t val_)
     return setNumStr(oss.str());
 }
 
-bool UniValue::setInt(int64_t val_)
+bool RLPValue::setInt(int64_t val_)
 {
     std::ostringstream oss;
 
@@ -72,7 +72,7 @@ bool UniValue::setInt(int64_t val_)
     return setNumStr(oss.str());
 }
 
-bool UniValue::setFloat(double val_)
+bool RLPValue::setFloat(double val_)
 {
     std::ostringstream oss;
 
@@ -83,7 +83,7 @@ bool UniValue::setFloat(double val_)
     return ret;
 }
 
-bool UniValue::setStr(const std::string& val_)
+bool RLPValue::setStr(const std::string& val_)
 {
     clear();
     typ = VSTR;
@@ -91,21 +91,21 @@ bool UniValue::setStr(const std::string& val_)
     return true;
 }
 
-bool UniValue::setArray()
+bool RLPValue::setArray()
 {
     clear();
     typ = VARR;
     return true;
 }
 
-bool UniValue::setObject()
+bool RLPValue::setObject()
 {
     clear();
     typ = VOBJ;
     return true;
 }
 
-bool UniValue::push_back(const UniValue& val_)
+bool RLPValue::push_back(const RLPValue& val_)
 {
     if (typ != VARR)
         return false;
@@ -114,7 +114,7 @@ bool UniValue::push_back(const UniValue& val_)
     return true;
 }
 
-bool UniValue::push_backV(const std::vector<UniValue>& vec)
+bool RLPValue::push_backV(const std::vector<RLPValue>& vec)
 {
     if (typ != VARR)
         return false;
@@ -124,13 +124,13 @@ bool UniValue::push_backV(const std::vector<UniValue>& vec)
     return true;
 }
 
-void UniValue::__pushKV(const std::string& key, const UniValue& val_)
+void RLPValue::__pushKV(const std::string& key, const RLPValue& val_)
 {
     keys.push_back(key);
     values.push_back(val_);
 }
 
-bool UniValue::pushKV(const std::string& key, const UniValue& val_)
+bool RLPValue::pushKV(const std::string& key, const RLPValue& val_)
 {
     if (typ != VOBJ)
         return false;
@@ -143,7 +143,7 @@ bool UniValue::pushKV(const std::string& key, const UniValue& val_)
     return true;
 }
 
-bool UniValue::pushKVs(const UniValue& obj)
+bool RLPValue::pushKVs(const RLPValue& obj)
 {
     if (typ != VOBJ || obj.typ != VOBJ)
         return false;
@@ -154,7 +154,7 @@ bool UniValue::pushKVs(const UniValue& obj)
     return true;
 }
 
-void UniValue::getObjMap(std::map<std::string,UniValue>& kv) const
+void RLPValue::getObjMap(std::map<std::string,RLPValue>& kv) const
 {
     if (typ != VOBJ)
         return;
@@ -164,7 +164,7 @@ void UniValue::getObjMap(std::map<std::string,UniValue>& kv) const
         kv[keys[i]] = values[i];
 }
 
-bool UniValue::findKey(const std::string& key, size_t& retIdx) const
+bool RLPValue::findKey(const std::string& key, size_t& retIdx) const
 {
     for (size_t i = 0; i < keys.size(); i++) {
         if (keys[i] == key) {
@@ -176,12 +176,12 @@ bool UniValue::findKey(const std::string& key, size_t& retIdx) const
     return false;
 }
 
-bool UniValue::checkObject(const std::map<std::string,UniValue::VType>& t) const
+bool RLPValue::checkObject(const std::map<std::string,RLPValue::VType>& t) const
 {
     if (typ != VOBJ)
         return false;
 
-    for (std::map<std::string,UniValue::VType>::const_iterator it = t.begin();
+    for (std::map<std::string,RLPValue::VType>::const_iterator it = t.begin();
          it != t.end(); ++it) {
         size_t idx = 0;
         if (!findKey(it->first, idx))
@@ -194,49 +194,49 @@ bool UniValue::checkObject(const std::map<std::string,UniValue::VType>& t) const
     return true;
 }
 
-const UniValue& UniValue::operator[](const std::string& key) const
+const RLPValue& RLPValue::operator[](const std::string& key) const
 {
     if (typ != VOBJ)
-        return NullUniValue;
+        return NullRLPValue;
 
     size_t index = 0;
     if (!findKey(key, index))
-        return NullUniValue;
+        return NullRLPValue;
 
     return values.at(index);
 }
 
-const UniValue& UniValue::operator[](size_t index) const
+const RLPValue& RLPValue::operator[](size_t index) const
 {
     if (typ != VOBJ && typ != VARR)
-        return NullUniValue;
+        return NullRLPValue;
     if (index >= values.size())
-        return NullUniValue;
+        return NullRLPValue;
 
     return values.at(index);
 }
 
-const char *uvTypeName(UniValue::VType t)
+const char *uvTypeName(RLPValue::VType t)
 {
     switch (t) {
-    case UniValue::VNULL: return "null";
-    case UniValue::VBOOL: return "bool";
-    case UniValue::VOBJ: return "object";
-    case UniValue::VARR: return "array";
-    case UniValue::VSTR: return "string";
-    case UniValue::VNUM: return "number";
+    case RLPValue::VNULL: return "null";
+    case RLPValue::VBOOL: return "bool";
+    case RLPValue::VOBJ: return "object";
+    case RLPValue::VARR: return "array";
+    case RLPValue::VSTR: return "string";
+    case RLPValue::VNUM: return "number";
     }
 
     // not reached
     return NULL;
 }
 
-const UniValue& find_value(const UniValue& obj, const std::string& name)
+const RLPValue& find_value(const RLPValue& obj, const std::string& name)
 {
     for (unsigned int i = 0; i < obj.keys.size(); i++)
         if (obj.keys[i] == name)
             return obj.values.at(i);
 
-    return NullUniValue;
+    return NullRLPValue;
 }
 
