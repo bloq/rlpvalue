@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(rlpvalue_constructor)
     BOOST_CHECK(v2.isBuffer());
 
     RLPValue v3(RLPValue::VBUF);
-    v2.assign("foo");
+    v3.assign("foo");
     BOOST_CHECK(v3.isBuffer());
     BOOST_CHECK_EQUAL(v3.getValStr(), "foo");
 
@@ -54,14 +54,6 @@ BOOST_AUTO_TEST_CASE(rlpvalue_constructor)
     RLPValue v9(vcs);
     BOOST_CHECK(v9.isBuffer());
     BOOST_CHECK_EQUAL(v9.getValStr(), "zappa");
-}
-
-BOOST_AUTO_TEST_CASE(rlpvalue_typecheck)
-{
-    RLPValue v5;
-    BOOST_CHECK(v5.read("[true, 10]"));
-    BOOST_CHECK_NO_THROW(v5.get_array());
-    std::vector<RLPValue> vals = v5.getValues();
 }
 
 BOOST_AUTO_TEST_CASE(rlpvalue_set)
@@ -101,16 +93,12 @@ BOOST_AUTO_TEST_CASE(rlpvalue_array)
     BOOST_CHECK(arr.push_backV(vec));
 
     BOOST_CHECK_EQUAL(arr.empty(), false);
-    BOOST_CHECK_EQUAL(arr.size(), 9);
+    BOOST_CHECK_EQUAL(arr.size(), 4);
 
-    BOOST_CHECK_EQUAL(arr[0].getValStr(), "1023");
-    BOOST_CHECK_EQUAL(arr[1].getValStr(), "zippy");
-    BOOST_CHECK_EQUAL(arr[2].getValStr(), "pippy");
-    BOOST_CHECK_EQUAL(arr[3].getValStr(), "boing");
-    BOOST_CHECK_EQUAL(arr[4].getValStr(), "going");
-    BOOST_CHECK_EQUAL(arr[5].getValStr(), "400");
-    BOOST_CHECK_EQUAL(arr[6].getValStr(), "-400");
-    BOOST_CHECK_EQUAL(arr[7].getValStr(), "-401");
+    BOOST_CHECK_EQUAL(arr[0].getValStr(), "zippy");
+    BOOST_CHECK_EQUAL(arr[1].getValStr(), "pippy");
+    BOOST_CHECK_EQUAL(arr[2].getValStr(), "boing");
+    BOOST_CHECK_EQUAL(arr[3].getValStr(), "going");
 
     BOOST_CHECK_EQUAL(arr[999].getValStr(), "");
 
@@ -119,40 +107,8 @@ BOOST_AUTO_TEST_CASE(rlpvalue_array)
     BOOST_CHECK_EQUAL(arr.size(), 0);
 }
 
-static const char *json1 =
-"[1.10000000,{\"key1\":\"str\\u0000\",\"key2\":800,\"key3\":{\"name\":\"martian http://test.com\"}}]";
-
 BOOST_AUTO_TEST_CASE(rlpvalue_readwrite)
 {
-    RLPValue v;
-    BOOST_CHECK(v.read(json1));
-
-    std::string strJson1(json1);
-    BOOST_CHECK(v.read(strJson1));
-
-    BOOST_CHECK(v.isArray());
-    BOOST_CHECK_EQUAL(v.size(), 2);
-
-    BOOST_CHECK_EQUAL(v[0].getValStr(), "1.10000000");
-
-    RLPValue obj = v[1];
-    BOOST_CHECK_EQUAL(obj.size(), 3);
-
-    BOOST_CHECK_EQUAL(strJson1, v.write());
-
-    /* Check for (correctly reporting) a parsing error if the initial
-       JSON construct is followed by more stuff.  Note that whitespace
-       is, of course, exempt.  */
-
-    BOOST_CHECK(v.read("  {}\n  "));
-    BOOST_CHECK(v.read("  []\n  "));
-    BOOST_CHECK(v.isArray());
-
-    BOOST_CHECK(!v.read("@{}"));
-    BOOST_CHECK(!v.read("{} garbage"));
-    BOOST_CHECK(!v.read("[]{}"));
-    BOOST_CHECK(!v.read("{}[]"));
-    BOOST_CHECK(!v.read("{} 42"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -160,7 +116,6 @@ BOOST_AUTO_TEST_SUITE_END()
 int main (int argc, char *argv[])
 {
     rlpvalue_constructor();
-    rlpvalue_typecheck();
     rlpvalue_set();
     rlpvalue_array();
     rlpvalue_readwrite();

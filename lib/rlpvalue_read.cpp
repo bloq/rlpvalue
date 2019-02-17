@@ -1,401 +1,196 @@
 // Copyright 2014 BitPay Inc.
+// Copyright 2019 Bloq Inc.
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or https://opensource.org/licenses/mit-license.php.
 
-#include <string.h>
 #include <vector>
-#include <stdio.h>
+#include <cassert>
 #include "rlpvalue.h"
-#include "rlpvalue_utffilter.h"
 
-static bool json_isdigit(int ch)
+uint64_t toInteger(const unsigned char *raw, size_t len)
 {
-    return ((ch >= '0') && (ch <= '9'));
+    if (len == 0)
+        return 0;
+    else if (len == 1)
+        return *raw;
+    else
+        return (raw[len - 1]) + (toInteger(raw, len - 1) * 256);
 }
 
-// convert hexadecimal string to unsigned integer
-static const char *hatoui(const char *first, const char *last,
-                          unsigned int& out)
+bool RLPValue::readArray(const unsigned char *raw, size_t len,
+             size_t uintlen, size_t payloadlen,
+             size_t& consumed, size_t& wanted)
 {
-    unsigned int result = 0;
-    for (; first != last; ++first)
-    {
-        int digit;
-        if (json_isdigit(*first))
-            digit = *first - '0';
+    const size_t prefixlen = 1;
 
-        else if (*first >= 'a' && *first <= 'f')
-            digit = *first - 'a' + 10;
-
-        else if (*first >= 'A' && *first <= 'F')
-            digit = *first - 'A' + 10;
-
-        else
-            break;
-
-        result = 16 * result + digit;
+    // validate list length, including possible addition overflows.
+    size_t expected = prefixlen + uintlen + payloadlen;
+    if ((expected > len) || (payloadlen > len)) {
+        wanted = expected > payloadlen ? expected : payloadlen;
+        return false;
     }
-    out = result;
 
-    return first;
-}
+    // we are type=array
+    if (!setArray())
+        return false;
 
-enum jtokentype getJsonToken(std::string& tokenVal, unsigned int& consumed,
-                            const char *raw, const char *end)
-{
-    tokenVal.clear();
-    consumed = 0;
+    size_t child_len = payloadlen;
+    size_t child_wanted = 0;
+    size_t total_consumed = 0;
 
-    const char *rawStart = raw;
+    const unsigned char *list_ent = raw + prefixlen + uintlen;
 
-    while (raw < end && (json_isspace(*raw)))          // skip whitespace
-        raw++;
+    // recursively read until payloadlen bytes parsed, or error
+    while (child_len > 0) {
+        RLPValue childVal;
+        size_t child_consumed = 0;
 
-    if (raw >= end)
-        return JTOK_NONE;
+        if (!childVal.read(list_ent, child_len,
+                       child_consumed, child_wanted))
+            return false;
 
-    switch (*raw) {
+        total_consumed += child_consumed;
+        list_ent += child_consumed;
+        child_len -= child_consumed;
 
-    case '{':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_OBJ_OPEN;
-    case '}':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_OBJ_CLOSE;
-    case '[':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_ARR_OPEN;
-    case ']':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_ARR_CLOSE;
-
-    case ':':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_COLON;
-    case ',':
-        raw++;
-        consumed = (raw - rawStart);
-        return JTOK_COMMA;
-
-    case 'n':
-    case 't':
-    case 'f':
-        if (!strncmp(raw, "null", 4)) {
-            raw += 4;
-            consumed = (raw - rawStart);
-            return JTOK_KW_NULL;
-        } else if (!strncmp(raw, "true", 4)) {
-            raw += 4;
-            consumed = (raw - rawStart);
-            return JTOK_KW_TRUE;
-        } else if (!strncmp(raw, "false", 5)) {
-            raw += 5;
-            consumed = (raw - rawStart);
-            return JTOK_KW_FALSE;
-        } else
-            return JTOK_ERR;
-
-    case '-':
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9': {
-        // part 1: int
-        std::string numStr;
-
-        const char *first = raw;
-
-        const char *firstDigit = first;
-        if (!json_isdigit(*firstDigit))
-            firstDigit++;
-        if ((*firstDigit == '0') && json_isdigit(firstDigit[1]))
-            return JTOK_ERR;
-
-        numStr += *raw;                       // copy first char
-        raw++;
-
-        if ((*first == '-') && (raw < end) && (!json_isdigit(*raw)))
-            return JTOK_ERR;
-
-        while (raw < end && json_isdigit(*raw)) {  // copy digits
-            numStr += *raw;
-            raw++;
-        }
-
-        // part 2: frac
-        if (raw < end && *raw == '.') {
-            numStr += *raw;                   // copy .
-            raw++;
-
-            if (raw >= end || !json_isdigit(*raw))
-                return JTOK_ERR;
-            while (raw < end && json_isdigit(*raw)) { // copy digits
-                numStr += *raw;
-                raw++;
-            }
-        }
-
-        // part 3: exp
-        if (raw < end && (*raw == 'e' || *raw == 'E')) {
-            numStr += *raw;                   // copy E
-            raw++;
-
-            if (raw < end && (*raw == '-' || *raw == '+')) { // copy +/-
-                numStr += *raw;
-                raw++;
-            }
-
-            if (raw >= end || !json_isdigit(*raw))
-                return JTOK_ERR;
-            while (raw < end && json_isdigit(*raw)) { // copy digits
-                numStr += *raw;
-                raw++;
-            }
-        }
-
-        tokenVal = numStr;
-        consumed = (raw - rawStart);
-        return JTOK_NUMBER;
-        }
-
-    case '"': {
-        raw++;                                // skip "
-
-        std::string valStr;
-        JSONUTF8StringFilter writer(valStr);
-
-        while (true) {
-            if (raw >= end || (unsigned char)*raw < 0x20)
-                return JTOK_ERR;
-
-            else if (*raw == '\\') {
-                raw++;                        // skip backslash
-
-                if (raw >= end)
-                    return JTOK_ERR;
-
-                switch (*raw) {
-                case '"':  writer.push_back('\"'); break;
-                case '\\': writer.push_back('\\'); break;
-                case '/':  writer.push_back('/'); break;
-                case 'b':  writer.push_back('\b'); break;
-                case 'f':  writer.push_back('\f'); break;
-                case 'n':  writer.push_back('\n'); break;
-                case 'r':  writer.push_back('\r'); break;
-                case 't':  writer.push_back('\t'); break;
-
-                case 'u': {
-                    unsigned int codepoint;
-                    if (raw + 1 + 4 >= end ||
-                        hatoui(raw + 1, raw + 1 + 4, codepoint) !=
-                               raw + 1 + 4)
-                        return JTOK_ERR;
-                    writer.push_back_u(codepoint);
-                    raw += 4;
-                    break;
-                    }
-                default:
-                    return JTOK_ERR;
-
-                }
-
-                raw++;                        // skip esc'd char
-            }
-
-            else if (*raw == '"') {
-                raw++;                        // skip "
-                break;                        // stop scanning
-            }
-
-            else {
-                writer.push_back(*raw);
-                raw++;
-            }
-        }
-
-        if (!writer.finalize())
-            return JTOK_ERR;
-        tokenVal = valStr;
-        consumed = (raw - rawStart);
-        return JTOK_STRING;
-        }
-
-    default:
-        return JTOK_ERR;
+        values.push_back(childVal);
     }
+
+    consumed = total_consumed;
+    return true;
 }
 
-enum expect_bits {
-    EXP_OBJ_NAME = (1U << 0),
-    EXP_COLON = (1U << 1),
-    EXP_ARR_VALUE = (1U << 2),
-    EXP_VALUE = (1U << 3),
-    EXP_NOT_VALUE = (1U << 4),
-};
-
-#define expect(bit) (expectMask & (EXP_##bit))
-#define setExpect(bit) (expectMask |= EXP_##bit)
-#define clearExpect(bit) (expectMask &= ~EXP_##bit)
-
-bool RLPValue::read(const char *raw, size_t size)
+bool RLPValue::read(const unsigned char *raw, size_t len,
+                size_t& consumed, size_t& wanted)
 {
     clear();
+    consumed = 0;
+    wanted = 0;
 
-    uint32_t expectMask = 0;
     std::vector<RLPValue*> stack;
+    std::vector<unsigned char> buf;
+    const unsigned char* end = raw + len;
 
-    std::string tokenVal;
-    unsigned int consumed;
-    enum jtokentype tok = JTOK_NONE;
-    enum jtokentype last_tok = JTOK_NONE;
-    const char* end = raw + size;
-    do {
-        last_tok = tok;
+    const size_t prefixlen = 1;
 
-        tok = getJsonToken(tokenVal, consumed, raw, end);
-        if (tok == JTOK_NONE || tok == JTOK_ERR)
-            goto return_fail;
-        raw += consumed;
+    unsigned char ch = *raw;
 
-        bool isValueOpen = jsonTokenIsValue(tok) ||
-            tok == JTOK_OBJ_OPEN || tok == JTOK_ARR_OPEN;
+    if (len < 1) {
+        wanted = 1;
+        goto out_fail;
+    }
 
-        if (expect(VALUE)) {
-            if (!isValueOpen)
-                goto return_fail;
-            clearExpect(VALUE);
+    // Case 1: [prefix is 1-byte data buffer]
+    if (ch <= 0x7f) {
+        const unsigned char *tok_start = raw;
+        const unsigned char *tok_end = tok_start + prefixlen;
+        assert(tok_end <= end);
 
-        } else if (expect(ARR_VALUE)) {
-            bool isArrValue = isValueOpen || (tok == JTOK_ARR_CLOSE);
-            if (!isArrValue)
-                goto return_fail;
+        // parsing done; assign data buffer value.
+        buf.assign(tok_start, tok_end);
+        assign(buf);
 
-            clearExpect(ARR_VALUE);
+        consumed = buf.size();
 
-        } else if (expect(OBJ_NAME)) {
-            bool isObjName = (tok == JTOK_OBJ_CLOSE || tok == JTOK_STRING);
-            if (!isObjName)
-                goto return_fail;
+    // Case 2: [prefix, including buffer length][data]
+    } else if ((ch >= 0x80) && (ch <= 0xb7)) {
+        size_t blen = ch - 0x80;
+        size_t expected = prefixlen + blen;
 
-        } else if (expect(COLON)) {
-            if (tok != JTOK_COLON)
-                goto return_fail;
-            clearExpect(COLON);
-
-        } else if (!expect(COLON) && (tok == JTOK_COLON)) {
-            goto return_fail;
+        if (len < expected) {
+            wanted = expected;
+            goto out_fail;
         }
 
-        if (expect(NOT_VALUE)) {
-            if (isValueOpen)
-                goto return_fail;
-            clearExpect(NOT_VALUE);
+        const unsigned char *tok_start = raw + 1;
+        const unsigned char *tok_end = tok_start + blen;
+        assert(tok_end <= end);
+
+        // parsing done; assign data buffer value.
+        buf.assign(tok_start, tok_end);
+        assign(buf);
+
+        consumed = expected;
+
+    // Case 3: [prefix][buffer length][data]
+    } else if ((ch >= 0xb8) && (ch <= 0xbf)) {
+        size_t uintlen = ch - 0xb7;
+        size_t expected = prefixlen + uintlen;
+
+        if (len < expected) {
+            wanted = expected;
+            goto out_fail;
         }
 
-        switch (tok) {
+        // read buffer length
+        const unsigned char *tok_start = raw + prefixlen;
+        uint64_t slen = toInteger(tok_start, uintlen);
 
-        case JTOK_ARR_OPEN: {
-            VType utyp = VARR;
-            if (!stack.size()) {
-                setArray();
-                stack.push_back(this);
-            } else {
-                RLPValue tmpVal(utyp);
-                RLPValue *top = stack.back();
-                top->values.push_back(tmpVal);
-
-                RLPValue *newTop = &(top->values.back());
-                stack.push_back(newTop);
-            }
-
-            setExpect(ARR_VALUE);
-            break;
-            }
-
-        case JTOK_ARR_CLOSE: {
-            if (!stack.size() || (last_tok == JTOK_COMMA))
-                goto return_fail;
-
-            VType utyp = VARR;
-            RLPValue *top = stack.back();
-            if (utyp != top->getType())
-                goto return_fail;
-
-            stack.pop_back();
-            clearExpect(OBJ_NAME);
-            setExpect(NOT_VALUE);
-            break;
-            }
-
-        case JTOK_COMMA: {
-            if (!stack.size() ||
-                (last_tok == JTOK_COMMA) || (last_tok == JTOK_ARR_OPEN))
-                goto return_fail;
-
-            setExpect(ARR_VALUE);
-            break;
-            }
-
-        case JTOK_KW_NULL:
-        case JTOK_KW_TRUE:
-        case JTOK_KW_FALSE: {
-            RLPValue tmpVal;
-            switch (tok) {
-            case JTOK_KW_NULL:
-                // do nothing more
-                break;
-            default: /* impossible */ break;
-            }
-
-            if (!stack.size()) {
-                *this = tmpVal;
-                break;
-            }
-
-            RLPValue *top = stack.back();
-            top->values.push_back(tmpVal);
-
-            setExpect(NOT_VALUE);
-            break;
-            }
-
-        case JTOK_STRING: {
-            RLPValue tmpVal(tokenVal);
-            if (!stack.size()) {
-                *this = tmpVal;
-                break;
-            }
-            RLPValue *top = stack.back();
-            top->values.push_back(tmpVal);
-
-            setExpect(NOT_VALUE);
-            break;
-            }
-
-        default:
-            goto return_fail;
+        // validate buffer length, including possible addition overflows.
+        expected = prefixlen + uintlen + slen;
+        if ((expected > len) || (slen > len)) {
+	    wanted = slen > expected ? slen : expected;
+            goto out_fail;
         }
-    } while (!stack.empty ());
 
-    /* Check that nothing follows the initial construct (parsed above).  */
-    tok = getJsonToken(tokenVal, consumed, raw, end);
-    if (tok != JTOK_NONE)
-        goto return_fail;
+        // parsing done; assign data buffer value.
+        tok_start = raw + prefixlen + uintlen;
+        const unsigned char *tok_end = tok_start + slen;
+        buf.assign(tok_start, tok_end);
+        assign(buf);
+
+        consumed = expected;
+
+    // Case 4: [prefix][list]
+    } else if ((ch >= 0xc0) && (ch <= 0xf7)) {
+        size_t payloadlen = ch - 0xc0;
+        size_t expected = prefixlen + payloadlen;
+        size_t list_consumed = 0;
+        size_t list_wanted = 0;
+
+        // read list payload
+        if (!readArray(raw, len, 0, payloadlen, list_consumed, list_wanted)) {
+            wanted = list_wanted;
+            goto out_fail;
+        }
+
+        assert(list_consumed == payloadlen);
+
+        consumed = expected;
+
+    // Case 5: [prefix][list length][list]
+    } else {
+        assert((ch >= 0xf8) && (ch <= 0xff));
+
+        size_t uintlen = ch - 0xf7;
+        size_t expected = prefixlen + uintlen;
+
+        if (len < expected) {
+            wanted = expected;
+            goto out_fail;
+        }
+
+        // read list length
+        const unsigned char *tok_start = raw + prefixlen;
+        size_t payloadlen = toInteger(tok_start, uintlen);
+
+        size_t list_consumed = 0;
+        size_t list_wanted = 0;
+
+        // read list payload
+        if (!readArray(raw, len, 0, payloadlen, list_consumed, list_wanted)) {
+            wanted = list_wanted;
+            goto out_fail;
+        }
+
+        assert(list_consumed == payloadlen);
+
+        consumed = prefixlen + uintlen + payloadlen;
+    }
 
     return true;
 
-return_fail:
+out_fail:
     clear();
     return false;
 }

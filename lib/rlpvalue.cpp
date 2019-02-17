@@ -30,6 +30,11 @@ void RLPValue::assign(const std::string& s)
     }
 }
 
+void RLPValue::assign(const std::vector<unsigned char>& buf)
+{
+    val.data.assign(buf.begin(), buf.end());
+}
+
 bool RLPValue::setArray()
 {
     clear();

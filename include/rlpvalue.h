@@ -59,6 +59,7 @@ public:
 
     void clear();
 
+    void assign(const std::vector<unsigned char>& val);
     void assign(const std::string& val);
 
     bool setArray();
@@ -88,13 +89,13 @@ public:
 
     std::string write() const;
 
-    bool read(const char *raw, size_t len);
-    bool read(const char *raw) { return read(raw, strlen(raw)); }
-    bool read(const std::string& rawStr) {
-        return read(rawStr.data(), rawStr.size());
-    }
+    bool read(const unsigned char *raw, size_t len,
+	      size_t& consumed, size_t& wanted);
 
 private:
+    bool readArray(const unsigned char *raw, size_t len,
+	      size_t uintlen, size_t payloadlen,
+	      size_t& consumed, size_t& wanted);
     RLPValue::VType typ;
     RLPBuffer val;
     std::vector<RLPValue> values;
@@ -112,58 +113,7 @@ public:
     enum VType type() const { return getType(); }
 };
 
-enum jtokentype {
-    JTOK_ERR        = -1,
-    JTOK_NONE       = 0,                           // eof
-    JTOK_OBJ_OPEN,
-    JTOK_OBJ_CLOSE,
-    JTOK_ARR_OPEN,
-    JTOK_ARR_CLOSE,
-    JTOK_COLON,
-    JTOK_COMMA,
-    JTOK_KW_NULL,
-    JTOK_KW_TRUE,
-    JTOK_KW_FALSE,
-    JTOK_NUMBER,
-    JTOK_STRING,
-};
-
-extern enum jtokentype getJsonToken(std::string& tokenVal,
-                                    unsigned int& consumed, const char *raw, const char *end);
 extern const char *uvTypeName(RLPValue::VType t);
-
-static inline bool jsonTokenIsValue(enum jtokentype jtt)
-{
-    switch (jtt) {
-    case JTOK_KW_NULL:
-    case JTOK_KW_TRUE:
-    case JTOK_KW_FALSE:
-    case JTOK_NUMBER:
-    case JTOK_STRING:
-        return true;
-
-    default:
-        return false;
-    }
-
-    // not reached
-}
-
-static inline bool json_isspace(int ch)
-{
-    switch (ch) {
-    case 0x20:
-    case 0x09:
-    case 0x0a:
-    case 0x0d:
-        return true;
-
-    default:
-        return false;
-    }
-
-    // not reached
-}
 
 extern const RLPValue NullRLPValue;
 
