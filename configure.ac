@@ -72,6 +72,9 @@ if test x$system_univalue != xno ; then
   fi
 fi
 
+AC_CHECK_LIB(argp, argp_parse, ARGP_LIBS=-largp)
+AC_SUBST(ARGP_LIBS)
+
 AC_SUBST(LIBRLPVALUE_CURRENT)
 AC_SUBST(LIBRLPVALUE_REVISION)
 AC_SUBST(LIBRLPVALUE_AGE)
