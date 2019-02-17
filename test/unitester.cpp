@@ -25,9 +25,42 @@ std::string srcdir(JSON_TEST_SRC);
 static bool test_failed = false;
 
 extern uint64_t toInteger(const unsigned char *raw, size_t len);
+extern std::string encodeBinary(uint64_t n);
 
 static uint64_t toInteger(const char *raw, size_t len) {
 	return toInteger((const unsigned char *) raw, len);
+}
+
+static void listPopulateJson(RLPValue& v, const std::vector<UniValue>& values)
+{
+	assert(v.isArray());
+
+	for (auto it = values.begin(); it != values.end(); it++) {
+		const UniValue& jval = *it;
+
+		if (jval.isStr()) {
+			const std::string& elemstr = jval.get_str();
+
+			RLPValue tmpv(elemstr);
+			v.push_back(tmpv);
+
+		} else if (jval.isNum()) {
+			uint64_t test_val = jval.get_int64();
+			std::string val_enc = encodeBinary(test_val);
+
+			RLPValue tmpv(val_enc);
+			v.push_back(tmpv);
+
+		} else if (jval.isArray()) {
+			RLPValue tmpv(RLPValue::VARR);
+			const std::vector<UniValue>& tmp_jvalues = jval.getValues();
+			listPopulateJson(tmpv, tmp_jvalues);
+
+			v.push_back(tmpv);
+		} else {
+			assert(0 && "invalid list-populate json type");
+		}
+	}
 }
 
 static bool runtest(const std::string& filename, const std::string& key,
@@ -73,6 +106,16 @@ static bool runtest(const std::string& filename, const std::string& key,
 			if (test_val == dec_val)
 				rc = true;
 		}
+	} else if (jval["in"].isArray()) {
+		RLPValue root(RLPValue::VARR);
+		const std::vector<UniValue>& values = jval["in"].getValues();
+		listPopulateJson(root, values);
+
+		std::string genOutput = root.write();
+		if ((outb.size() == genOutput.size()) &&
+		    (memcmp(&outb[0], &genOutput[0], outb.size()) == 0))
+			rc = true;
+
 	} else {
 		fprintf(stderr, "ERR: test %s not implemented yet\n", key.c_str());
 	}

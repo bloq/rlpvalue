@@ -22,7 +22,7 @@ std::string RLPValue::write() const
     return s;
 }
 
-static std::string encodeBinary(uint64_t n)
+std::string encodeBinary(uint64_t n)
 {
 	std::string rs;
 
