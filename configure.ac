@@ -43,6 +43,35 @@ LIBRLPVALUE_CURRENT=librlpvalue_current
 LIBRLPVALUE_REVISION=librlpvalue_revision
 LIBRLPVALUE_AGE=librlpvalue_age
 
+if test x$system_univalue != xno ; then
+  found_univalue=no
+  if test x$use_pkgconfig = xyes; then
+    : #NOP
+    m4_ifdef(
+      [PKG_CHECK_MODULES],
+      [
+        PKG_CHECK_MODULES([UNIVALUE],[libunivalue >= 1.0.4],[found_univalue=yes],[true])
+      ]
+    )
+  else
+    AC_CHECK_HEADER([univalue.h],[
+      AC_CHECK_LIB([univalue],  [main],[
+        UNIVALUE_LIBS=-lunivalue
+        found_univalue=yes
+      ],[true])
+    ],[true])
+  fi
+
+  if test x$found_univalue = xyes ; then
+    system_univalue=yes
+    need_bundled_univalue=no
+  elif test x$system_univalue = xyes ; then
+    AC_MSG_ERROR([univalue not found])
+  else
+    system_univalue=no
+  fi
+fi
+
 AC_SUBST(LIBRLPVALUE_CURRENT)
 AC_SUBST(LIBRLPVALUE_REVISION)
 AC_SUBST(LIBRLPVALUE_AGE)

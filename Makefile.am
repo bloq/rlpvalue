@@ -25,10 +25,12 @@ noinst_PROGRAMS = $(TESTS)
 
 TEST_DATA_DIR=test/data
 
-test_unitester_SOURCES = test/unitester.cpp
+test_unitester_SOURCES = \
+	test/unitester.cpp \
+	test/utilstrencodings.h test/utilstrencodings.cpp
 test_unitester_LDADD = librlpvalue.la
 test_unitester_CXXFLAGS = -I$(top_srcdir)/include -DJSON_TEST_SRC=\"$(srcdir)/$(TEST_DATA_DIR)\"
-test_unitester_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS) -lunivalue
+test_unitester_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS) $(UNIVALUE_LIBS)
 
 test_object_SOURCES = test/object.cpp
 test_object_LDADD = librlpvalue.la
