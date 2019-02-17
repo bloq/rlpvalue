@@ -7,9 +7,11 @@
 #include <string.h>
 #include <cassert>
 #include <string>
+#include <ctype.h>
 #include <univalue.h>
 #include "utilstrencodings.h"
 #include "rlpvalue.h"
+#include "InfInt.h"
 
 using namespace std;
 
@@ -31,6 +33,43 @@ static uint64_t toInteger(const char *raw, size_t len) {
 	return toInteger((const unsigned char *) raw, len);
 }
 
+static bool isBigNumStr(const std::string& s)
+{
+	// first char must be #
+	if (s.empty() || s[0] != '#')
+		return false;
+
+	// remaining chars must be digits
+	for (unsigned int i = 1; i < s.size(); i++)
+		if (!isdigit(s[i]))
+			return false;
+
+	return true;
+}
+
+static std::string encodeBigNum(const InfInt& n)
+{
+	std::string rs;
+
+	if (n == 0) {
+		// do nothing; return empty string
+	} else {
+		rs.assign(encodeBigNum(n / 256));
+
+		InfInt iich = n % 256;
+		unsigned char ch = iich.toUnsignedLong();
+		rs.append((const char *) &ch, 1);
+	}
+
+	return rs;
+}
+
+static std::string encodeBigNumStr(const std::string& s)
+{
+	InfInt n(s);
+	return encodeBigNum(n);
+}
+
 static void listPopulateJson(RLPValue& v, const std::vector<UniValue>& values)
 {
 	assert(v.isArray());
@@ -39,7 +78,10 @@ static void listPopulateJson(RLPValue& v, const std::vector<UniValue>& values)
 		const UniValue& jval = *it;
 
 		if (jval.isStr()) {
-			const std::string& elemstr = jval.get_str();
+			std::string elemstr = jval.get_str();
+			if (isBigNumStr(elemstr)) {
+				elemstr = encodeBigNumStr(elemstr.substr(1));
+			}
 
 			RLPValue tmpv(elemstr);
 			v.push_back(tmpv);
@@ -73,7 +115,7 @@ static bool runtest(const std::string& filename, const std::string& key,
 		return true;
 	}
 
-	const string& ins = jval["in"].getValStr();
+	string ins = jval["in"].getValStr();
 	string outs = jval["out"].getValStr();
 
 	if (outs.substr(0, 2) == "0x")		// remove 0x prefix
@@ -94,6 +136,9 @@ static bool runtest(const std::string& filename, const std::string& key,
 		else if (ins == "INVALID" && rrc == false)
 			rc = true;
 	} else if (jval["in"].isStr()) {
+		if (isBigNumStr(ins))
+			ins = encodeBigNumStr(ins.substr(1));
+
 		if (v.isBuffer() && (ins == v.getValStr()))
 			rc = true;
 
