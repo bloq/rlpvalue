@@ -24,11 +24,16 @@ using namespace std;
 std::string srcdir(JSON_TEST_SRC);
 static bool test_failed = false;
 
+extern uint64_t toInteger(const unsigned char *raw, size_t len);
+
+static uint64_t toInteger(const char *raw, size_t len) {
+	return toInteger((const unsigned char *) raw, len);
+}
+
 static bool runtest(const std::string& filename, const std::string& key,
 		    const UniValue& jval)
 {
 	if (!jval.isObject() ||
-	    !jval["in"].isStr() ||
 	    !jval["out"].isStr()) {
 		fprintf(stderr, "    %s: skipping test, invalid\n",
 			key.c_str());
@@ -36,10 +41,15 @@ static bool runtest(const std::string& filename, const std::string& key,
 	}
 
 	const string& ins = jval["in"].getValStr();
-	const string& outs = jval["out"].getValStr();
+	string outs = jval["out"].getValStr();
 
+	if (outs.substr(0, 2) == "0x")		// remove 0x prefix
+		outs = outs.substr(2);
+
+	// decode RLP binary output test string from hex to binary
 	std::vector<unsigned char> outb = ParseHex(outs);
 
+	// attempt to parse with RLP class
 	RLPValue v;
 	size_t consumed, wanted;
 	bool rrc = v.read(&outb[0], outb.size(), consumed, wanted);
@@ -50,8 +60,21 @@ static bool runtest(const std::string& filename, const std::string& key,
 			rc = true;
 		else if (ins == "INVALID" && rrc == false)
 			rc = true;
+	} else if (jval["in"].isStr()) {
+		if (v.isBuffer() && (ins == v.getValStr()))
+			rc = true;
+
+	} else if (jval["in"].isNum()) {
+		if (v.isBuffer()) {
+			uint64_t test_val = jval["in"].get_int64();
+			string enc_val = v.getValStr();
+			uint64_t dec_val = toInteger(&enc_val[0],
+						     enc_val.size());
+			if (test_val == dec_val)
+				rc = true;
+		}
 	} else {
-		assert(0 && "unknown in-string in JSON");
+		fprintf(stderr, "ERR: test %s not implemented yet\n", key.c_str());
 	}
 
 	fprintf(stderr, "    %s: %s\n", key.c_str(),
