@@ -7,6 +7,7 @@
 #include <string.h>
 #include <cassert>
 #include <string>
+#include <univalue.h>
 #include "rlpvalue.h"
 
 #ifndef JSON_TEST_SRC
@@ -20,37 +21,27 @@
 std::string srcdir(JSON_TEST_SRC);
 static bool test_failed = false;
 
-#define d_assert(expr) { if (!(expr)) { test_failed = true; fprintf(stderr, "%s failed\n", filename.c_str()); } }
-#define f_assert(expr) { if (!(expr)) { test_failed = true; fprintf(stderr, "%s failed\n", __func__); } }
-
-static std::string rtrim(std::string s)
+static bool runtest(const std::string& filename, const std::string& key,
+		    const UniValue& jval)
 {
-    s.erase(s.find_last_not_of(" \n\r\t")+1);
-    return s;
+	fprintf(stderr, "    %s: not-implemented-yet\n", key.c_str());
+	return true;
 }
 
-static void runtest(std::string filename, const std::string& jdata)
+static void runtest_jfile(std::string filename, const UniValue& jfile)
 {
-        std::string prefix = filename.substr(0, 4);
+	assert(jfile.isObject());
 
-        bool wantPass = (prefix == "pass") || (prefix == "roun");
-        bool wantFail = (prefix == "fail");
-        bool wantRoundTrip = (prefix == "roun");
-        assert(wantPass || wantFail);
+	const std::vector<std::string>& keys = jfile.getKeys();
 
-        RLPValue val;
-        bool testResult = val.read(jdata);
+	fprintf(stderr, "Running testfile %s (%zu tests)\n",
+		filename.c_str(), keys.size());
 
-        if (wantPass) {
-            d_assert(testResult == true);
-        } else {
-            d_assert(testResult == false);
-        }
-
-        if (wantRoundTrip) {
-            std::string odata = val.write();
-            assert(odata == rtrim(jdata));
-        }
+	for (auto it = keys.begin(); it != keys.end(); it++) {
+		const std::string& key = *it;
+		if (!runtest(filename, key, jfile[key]))
+			test_failed = true;
+	}
 }
 
 static void runtest_file(const char *filename_)
@@ -58,7 +49,10 @@ static void runtest_file(const char *filename_)
         std::string basename(filename_);
         std::string filename = srcdir + "/" + basename;
         FILE *f = fopen(filename.c_str(), "r");
-        assert(f != NULL);
+	if (!f) {
+		perror(filename.c_str());
+		exit(1);
+	}
 
         std::string jdata;
 
@@ -74,95 +68,24 @@ static void runtest_file(const char *filename_)
         assert(!ferror(f));
         fclose(f);
 
-        runtest(basename, jdata);
+	UniValue jfile;
+	bool rc = jfile.read(jdata);
+	assert(rc == true);
+
+        runtest_jfile(basename, jfile);
 }
 
 static const char *filenames[] = {
-        "fail10.json",
-        "fail11.json",
-        "fail12.json",
-        "fail13.json",
-        "fail14.json",
-        "fail15.json",
-        "fail16.json",
-        "fail17.json",
-        //"fail18.json",             // investigate
-        "fail19.json",
-        "fail1.json",
-        "fail20.json",
-        "fail21.json",
-        "fail22.json",
-        "fail23.json",
-        "fail24.json",
-        "fail25.json",
-        "fail26.json",
-        "fail27.json",
-        "fail28.json",
-        "fail29.json",
-        "fail2.json",
-        "fail30.json",
-        "fail31.json",
-        "fail32.json",
-        "fail33.json",
-        "fail34.json",
-        "fail35.json",
-        "fail36.json",
-        "fail37.json",
-        "fail38.json",               // invalid unicode: only first half of surrogate pair
-        "fail39.json",               // invalid unicode: only second half of surrogate pair
-        "fail40.json",               // invalid unicode: broken UTF-8
-        "fail41.json",               // invalid unicode: unfinished UTF-8
-        "fail42.json",               // valid json with garbage following a nul byte
-        "fail44.json",               // unterminated string
-        "fail3.json",
-        "fail4.json",                // extra comma
-        "fail5.json",
-        "fail6.json",
-        "fail7.json",
-        "fail8.json",
-        "fail9.json",               // extra comma
-        "pass1.json",
-        "pass2.json",
-        "pass3.json",
-        "round1.json",              // round-trip test
-        "round2.json",              // unicode
-        "round3.json",              // bare string
-        "round4.json",              // bare number
-        "round5.json",              // bare true
-        "round6.json",              // bare false
-        "round7.json",              // bare null
+	"example.json",
+	"invalidRLPTest.json",
+	"rlptest.json",
 };
-
-// Test \u handling
-void unescape_unicode_test()
-{
-    RLPValue val;
-    bool testResult;
-    // Escaped ASCII (quote)
-    testResult = val.read("[\"\\u0022\"]");
-    f_assert(testResult);
-    f_assert(val[0].get_str() == "\"");
-    // Escaped Basic Plane character, two-byte UTF-8
-    testResult = val.read("[\"\\u0191\"]");
-    f_assert(testResult);
-    f_assert(val[0].get_str() == "\xc6\x91");
-    // Escaped Basic Plane character, three-byte UTF-8
-    testResult = val.read("[\"\\u2191\"]");
-    f_assert(testResult);
-    f_assert(val[0].get_str() == "\xe2\x86\x91");
-    // Escaped Supplementary Plane character U+1d161
-    testResult = val.read("[\"\\ud834\\udd61\"]");
-    f_assert(testResult);
-    f_assert(val[0].get_str() == "\xf0\x9d\x85\xa1");
-}
 
 int main (int argc, char *argv[])
 {
     for (unsigned int fidx = 0; fidx < ARRAY_SIZE(filenames); fidx++) {
         runtest_file(filenames[fidx]);
     }
-
-    unescape_unicode_test();
 
     return test_failed ? 1 : 0;
 }
