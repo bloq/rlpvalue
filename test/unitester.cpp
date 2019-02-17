@@ -108,7 +108,7 @@ static void runtest_file(const char *filename_)
 
 static const char *filenames[] = {
 	"example.json",
-//	"invalidRLPTest.json",
+	"invalidRLPTest.json",
 //	"rlptest.json",
 };
 

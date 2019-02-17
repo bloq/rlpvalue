@@ -106,6 +106,10 @@ bool RLPValue::read(const unsigned char *raw, size_t len,
         const unsigned char *tok_end = tok_start + blen;
         assert(tok_end <= end);
 
+	// require minimal encoding
+	if ((blen == 1) && (tok_start[0] <= 0x7f))
+		goto out_fail;
+
         // parsing done; assign data buffer value.
         buf.assign(tok_start, tok_end);
         assign(buf);
@@ -122,13 +126,19 @@ bool RLPValue::read(const unsigned char *raw, size_t len,
             goto out_fail;
         }
 
-        // read buffer length
+	assert(uintlen > 0 && uintlen <= RLP_maxUintLen);
+
         const unsigned char *tok_start = raw + prefixlen;
+	if ((uintlen > 1) && (tok_start[0] == 0))	// no leading zeroes
+		goto out_fail;
+
+        // read buffer length
         uint64_t slen = toInteger(tok_start, uintlen);
 
         // validate buffer length, including possible addition overflows.
         expected = prefixlen + uintlen + slen;
-        if ((expected > len) || (slen > len)) {
+        if ((slen < (RLP_listStart - RLP_bufferLenStart - RLP_maxUintLen)) ||
+	    (expected > len) || (slen > len)) {
 	    wanted = slen > expected ? slen : expected;
             goto out_fail;
         }
@@ -170,9 +180,18 @@ bool RLPValue::read(const unsigned char *raw, size_t len,
             goto out_fail;
         }
 
-        // read list length
+	assert(uintlen > 0 && uintlen <= RLP_maxUintLen);
+
         const unsigned char *tok_start = raw + prefixlen;
+	if ((uintlen > 1) && (tok_start[0] == 0))	// no leading zeroes
+		goto out_fail;
+
+        // read list length
         size_t payloadlen = toInteger(tok_start, uintlen);
+
+	// special requirement for non-immediate length
+	if (payloadlen < (0x100 - RLP_listStart - RLP_maxUintLen))
+		goto out_fail;
 
         size_t list_consumed = 0;
         size_t list_wanted = 0;

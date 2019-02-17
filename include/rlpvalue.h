@@ -16,6 +16,12 @@
 
 #include <utility>        // std::pair
 
+enum RLP_constants {
+	RLP_maxUintLen		= 8,
+	RLP_bufferLenStart	= 0x80,
+	RLP_listStart		= 0xc0,
+};
+
 // really, a generic buffer, but we are in the global namespace, hence a prefix
 class RLPBuffer {
 public:
