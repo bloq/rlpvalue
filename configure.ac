@@ -25,6 +25,7 @@ AC_CONFIG_SRCDIR([lib/rlpvalue.cpp])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
 AC_CONFIG_HEADERS([rlpvalue-config.h])
+AX_SUBDIRS_CONFIGURE([univalue], [--disable-shared])
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 
 dnl Require C++11 compiler (no GNU extensions)
@@ -42,35 +43,6 @@ LIBRLPVALUE_INTERFACE_AGE=librlpvalue_interface_age
 LIBRLPVALUE_CURRENT=librlpvalue_current
 LIBRLPVALUE_REVISION=librlpvalue_revision
 LIBRLPVALUE_AGE=librlpvalue_age
-
-if test x$system_univalue != xno ; then
-  found_univalue=no
-  if test x$use_pkgconfig = xyes; then
-    : #NOP
-    m4_ifdef(
-      [PKG_CHECK_MODULES],
-      [
-        PKG_CHECK_MODULES([UNIVALUE],[libunivalue >= 1.0.4],[found_univalue=yes],[true])
-      ]
-    )
-  else
-    AC_CHECK_HEADER([univalue.h],[
-      AC_CHECK_LIB([univalue],  [main],[
-        UNIVALUE_LIBS=-lunivalue
-        found_univalue=yes
-      ],[true])
-    ],[true])
-  fi
-
-  if test x$found_univalue = xyes ; then
-    system_univalue=yes
-    need_bundled_univalue=no
-  elif test x$system_univalue = xyes ; then
-    AC_MSG_ERROR([univalue not found])
-  else
-    system_univalue=no
-  fi
-fi
 
 AC_CHECK_LIB(argp, argp_parse, ARGP_LIBS=-largp)
 AC_SUBST(ARGP_LIBS)

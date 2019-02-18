@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I build-aux/m4
 
+SUBDIRS = univalue
+
 include_HEADERS = include/rlpvalue.h
 noinst_HEADERS = lib/rlpvalue_utffilter.h
 
@@ -24,7 +26,7 @@ TESTS = test/object test/unitester
 noinst_PROGRAMS = $(TESTS) src/rlp
 
 src_rlp_SOURCES = src/tool.cpp test/utilstrencodings.cpp
-src_rlp_LDADD = librlpvalue.la $(UNIVALUE_LIBS) $(ARGP_LIBS)
+src_rlp_LDADD = librlpvalue.la univalue/.libs/libunivalue.a $(ARGP_LIBS)
 src_rlp_CXXFLAGS = -I$(top_srcdir)/include
 src_rlp_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
@@ -34,7 +36,7 @@ test_unitester_SOURCES = \
 	test/InfInt.h \
 	test/unitester.cpp \
 	test/utilstrencodings.h test/utilstrencodings.cpp
-test_unitester_LDADD = librlpvalue.la $(UNIVALUE_LIBS)
+test_unitester_LDADD = librlpvalue.la univalue/.libs/libunivalue.a
 test_unitester_CXXFLAGS = -I$(top_srcdir)/include -DJSON_TEST_SRC=\"$(srcdir)/$(TEST_DATA_DIR)\"
 test_unitester_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 
