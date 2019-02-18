@@ -11,7 +11,7 @@
 #include <univalue.h>
 #include "utilstrencodings.h"
 #include "rlpvalue.h"
-#include "InfInt.h"
+#include "../src/InfInt.h"
 
 using namespace std;
 

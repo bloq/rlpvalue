@@ -18,6 +18,9 @@
 
 using namespace std;
 
+extern void RLPtoJSON(const RLPValue& rval, UniValue& jval);
+extern bool JSONtoRLP(const UniValue& jval, RLPValue& rval);
+
 static const char doc[] =
 "rlp - encode or decode RLP protocol encoding";
 
@@ -58,17 +61,30 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 static bool parseJsonInput(const std::string& body)
 {
 	bool rc = global_jval.read(body);
-	fprintf(stderr, "parseJson: %s\n", rc ? "ok" : "bad");
+
+	if (!rc)
+		fprintf(stderr, "JSON input validation failed\n");
+
 	return rc;
 }
 
 static bool parseRlpInput(const std::string& body)
 {
-	std::vector<unsigned char> buf = ParseHex(body);
+	std::vector<unsigned char> buf;
+
+	if (body.substr(0, 2) == "0x") {
+		string tmp = body.substr(2);
+		buf = ParseHex(tmp);
+	} else
+		buf = ParseHex(body);
 
 	size_t consumed, wanted;
 	bool rc = global_rval.read(&buf[0], buf.size(), consumed, wanted);
-	fprintf(stderr, "parseRlp: %s\n", rc ? "ok" : "bad");
+
+	if (!rc)
+		fprintf(stderr, "RLP input validation failed (%zu wanted)\n",
+			wanted);
+
 	return rc;
 }
 
@@ -124,63 +140,18 @@ static bool readInput()
 		return parseRlpInput(body);
 }
 
-static bool assignJson(UniValue& jval, const RLPValue& rval);
-
-static bool assignJsonArray(UniValue& jval, const RLPValue& rval)
-{
-	if (!jval.setArray())
-		return false;
-
-	const std::vector<RLPValue>& values = rval.getValues();
-	for (auto it = values.begin(); it != values.end(); it++) {
-		const RLPValue& childVal = *it;
-		UniValue childJval;
-
-		if (!assignJson(childJval, childVal))
-			return false;
-
-		jval.push_back(childJval);
-	}
-
-	return true;
-}
-
-static bool assignJsonBuffer(UniValue& jval, const RLPValue& rval)
-{
-	return jval.setStr(rval.getValStr());
-}
-
-static bool assignJson(UniValue& jval, const RLPValue& rval)
-{
-	if (rval.isBuffer())
-		return assignJsonBuffer(jval, rval);
-	else
-		return assignJsonArray(jval, rval);
-}
-
-// Decode RLP into JSON
-static bool decodeInput()
-{
-	return assignJson(global_jval, global_rval);
-}
-
-// Encode JSON into RLP
-static bool encodeInput()
-{
-	return false;
-}
-
 static bool mutateInput()
 {
 	if (inp_rlp)
-		return decodeInput();
+		RLPtoJSON(global_rval, global_jval);
 	else
-		return encodeInput();
+		JSONtoRLP(global_jval, global_rval);
+	return true;
 }
 
 static bool writeJsonOutput()
 {
-	string body = global_jval.write(2) + "\n";
+	string body = global_jval.write(2);
 	printf("%s\n", body.c_str());
 	return true;
 }
