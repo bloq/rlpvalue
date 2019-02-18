@@ -24,6 +24,13 @@ addons:
     packages:
       - pkg-config
 
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install gettext; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install argp-standalone; fi
+
 before_script:
   - if [ -n "$USE_SHELL" ]; then export CONFIG_SHELL="$USE_SHELL"; fi
   - test -n "$USE_SHELL" && eval '"$USE_SHELL" -c "./autogen.sh"' || ./autogen.sh
