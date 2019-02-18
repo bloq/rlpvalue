@@ -58,17 +58,30 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
 static bool parseJsonInput(const std::string& body)
 {
 	bool rc = global_jval.read(body);
-	fprintf(stderr, "parseJson: %s\n", rc ? "ok" : "bad");
+
+	if (!rc)
+		fprintf(stderr, "JSON input validation failed\n");
+
 	return rc;
 }
 
 static bool parseRlpInput(const std::string& body)
 {
-	std::vector<unsigned char> buf = ParseHex(body);
+	std::vector<unsigned char> buf;
+
+	if (body.substr(0, 2) == "0x") {
+		string tmp = body.substr(2);
+		buf = ParseHex(tmp);
+	} else
+		buf = ParseHex(body);
 
 	size_t consumed, wanted;
 	bool rc = global_rval.read(&buf[0], buf.size(), consumed, wanted);
-	fprintf(stderr, "parseRlp: %s\n", rc ? "ok" : "bad");
+
+	if (!rc)
+		fprintf(stderr, "RLP input validation failed (%zu wanted)\n",
+			wanted);
+
 	return rc;
 }
 
@@ -180,7 +193,7 @@ static bool mutateInput()
 
 static bool writeJsonOutput()
 {
-	string body = global_jval.write(2) + "\n";
+	string body = global_jval.write(2);
 	printf("%s\n", body.c_str());
 	return true;
 }
