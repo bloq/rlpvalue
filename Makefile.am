@@ -27,7 +27,11 @@ TESTS = test/object test/unitester
 
 noinst_PROGRAMS = src/rlp $(TESTS)
 
-src_rlp_SOURCES = src/tool.cpp src/rlp2json.cpp test/utilstrencodings.cpp
+src_rlp_SOURCES = \
+	src/InfInt.h \
+	src/tool.cpp \
+	src/rlp2json.cpp \
+	test/utilstrencodings.cpp
 src_rlp_LDADD = librlpvalue.la univalue/.libs/libunivalue.a $(ARGP_LIBS)
 src_rlp_CXXFLAGS = -I$(top_srcdir)/include $(UNIVALUE_CFLAGS)
 src_rlp_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
@@ -35,7 +39,6 @@ src_rlp_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 TEST_DATA_DIR=test/data
 
 test_unitester_SOURCES = \
-	test/InfInt.h \
 	test/unitester.cpp \
 	test/utilstrencodings.h test/utilstrencodings.cpp
 test_unitester_LDADD = librlpvalue.la univalue/.libs/libunivalue.a
