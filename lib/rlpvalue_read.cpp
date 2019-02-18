@@ -197,7 +197,7 @@ bool RLPValue::read(const unsigned char *raw, size_t len,
         size_t list_wanted = 0;
 
         // read list payload
-        if (!readArray(raw, len, 0, payloadlen, list_consumed, list_wanted)) {
+        if (!readArray(raw, len, uintlen, payloadlen, list_consumed, list_wanted)) {
             wanted = list_wanted;
             goto out_fail;
         }
