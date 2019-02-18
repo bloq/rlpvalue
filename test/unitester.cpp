@@ -158,8 +158,15 @@ static bool runtest(const std::string& filename, const std::string& key,
 
 		std::string genOutput = root.write();
 		if ((outb.size() == genOutput.size()) &&
-		    (memcmp(&outb[0], &genOutput[0], outb.size()) == 0))
+		    (memcmp(&outb[0], &genOutput[0], outb.size()) == 0)) {
 			rc = true;
+		} else {
+			std::string genHex = HexStr(genOutput.begin(),
+						    genOutput.end());
+			fprintf(stderr, "INS :%s\nGENS:%s\n",
+				outs.c_str(),
+				genHex.c_str());
+		}
 
 	} else {
 		fprintf(stderr, "ERR: test %s not implemented yet\n", key.c_str());

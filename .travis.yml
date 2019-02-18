@@ -24,9 +24,15 @@ addons:
     packages:
       - pkg-config
 
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+
+install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install gettext; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install argp-standalone; fi
+
 before_script:
   - if [ -n "$USE_SHELL" ]; then export CONFIG_SHELL="$USE_SHELL"; fi
-  - ./install-univalue.sh
   - test -n "$USE_SHELL" && eval '"$USE_SHELL" -c "./autogen.sh"' || ./autogen.sh
 
 script:
@@ -38,15 +44,15 @@ script:
   - export LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/depends/$HOST/lib
   - if [ "$RUN_TESTS" = "true" ]; then make $MAKEJOBS distcheck; fi
 
-matrix:
-  fast_finish: true
-  include:
-    - os: linux
-      compiler: gcc
-      env: RLPVALUE_CONFIG=--host=x86_64-w64-mingw32 RUN_TESTS=false
-      addons:
-        apt:
-          packages:
-            - g++-mingw-w64-x86-64
-            - gcc-mingw-w64-x86-64
-            - binutils-mingw-w64-x86-64
+#matrix:
+#  fast_finish: true
+#  include:
+#    - os: linux
+#      compiler: gcc
+#      env: RLPVALUE_CONFIG=--host=x86_64-w64-mingw32 RUN_TESTS=false
+#      addons:
+#        apt:
+#          packages:
+#            - g++-mingw-w64-x86-64
+#            - gcc-mingw-w64-x86-64
+#            - binutils-mingw-w64-x86-64
