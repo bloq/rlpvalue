@@ -18,6 +18,8 @@
 
 using namespace std;
 
+extern void RLPtoJSON(const RLPValue& rval, UniValue& jval);
+
 static const char doc[] =
 "rlp - encode or decode RLP protocol encoding";
 
@@ -137,44 +139,11 @@ static bool readInput()
 		return parseRlpInput(body);
 }
 
-static bool assignJson(UniValue& jval, const RLPValue& rval);
-
-static bool assignJsonArray(UniValue& jval, const RLPValue& rval)
-{
-	if (!jval.setArray())
-		return false;
-
-	const std::vector<RLPValue>& values = rval.getValues();
-	for (auto it = values.begin(); it != values.end(); it++) {
-		const RLPValue& childVal = *it;
-		UniValue childJval;
-
-		if (!assignJson(childJval, childVal))
-			return false;
-
-		jval.push_back(childJval);
-	}
-
-	return true;
-}
-
-static bool assignJsonBuffer(UniValue& jval, const RLPValue& rval)
-{
-	return jval.setStr(rval.getValStr());
-}
-
-static bool assignJson(UniValue& jval, const RLPValue& rval)
-{
-	if (rval.isBuffer())
-		return assignJsonBuffer(jval, rval);
-	else
-		return assignJsonArray(jval, rval);
-}
-
 // Decode RLP into JSON
 static bool decodeInput()
 {
-	return assignJson(global_jval, global_rval);
+	RLPtoJSON(global_rval, global_jval);
+	return true;
 }
 
 // Encode JSON into RLP

@@ -25,9 +25,9 @@ librlpvalue_la_CXXFLAGS = -I$(top_srcdir)/include
 
 TESTS = test/object test/unitester
 
-noinst_PROGRAMS = $(TESTS) src/rlp
+noinst_PROGRAMS = src/rlp $(TESTS)
 
-src_rlp_SOURCES = src/tool.cpp test/utilstrencodings.cpp
+src_rlp_SOURCES = src/tool.cpp src/rlp2json.cpp test/utilstrencodings.cpp
 src_rlp_LDADD = librlpvalue.la univalue/.libs/libunivalue.a $(ARGP_LIBS)
 src_rlp_CXXFLAGS = -I$(top_srcdir)/include $(UNIVALUE_CFLAGS)
 src_rlp_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
