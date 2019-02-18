@@ -28,6 +28,7 @@ static bool test_failed = false;
 
 extern uint64_t toInteger(const unsigned char *raw, size_t len);
 extern std::string encodeBinary(uint64_t n);
+extern bool JSONtoRLP(const UniValue& jval, RLPValue& rval);
 
 static uint64_t toInteger(const char *raw, size_t len) {
 	return toInteger((const unsigned char *) raw, len);
@@ -68,41 +69,6 @@ static std::string encodeBigNumStr(const std::string& s)
 {
 	InfInt n(s);
 	return encodeBigNum(n);
-}
-
-static void listPopulateJson(RLPValue& v, const std::vector<UniValue>& values)
-{
-	assert(v.isArray());
-
-	for (auto it = values.begin(); it != values.end(); it++) {
-		const UniValue& jval = *it;
-
-		if (jval.isStr()) {
-			std::string elemstr = jval.get_str();
-			if (isBigNumStr(elemstr)) {
-				elemstr = encodeBigNumStr(elemstr.substr(1));
-			}
-
-			RLPValue tmpv(elemstr);
-			v.push_back(tmpv);
-
-		} else if (jval.isNum()) {
-			uint64_t test_val = jval.get_int64();
-			std::string val_enc = encodeBinary(test_val);
-
-			RLPValue tmpv(val_enc);
-			v.push_back(tmpv);
-
-		} else if (jval.isArray()) {
-			RLPValue tmpv(RLPValue::VARR);
-			const std::vector<UniValue>& tmp_jvalues = jval.getValues();
-			listPopulateJson(tmpv, tmp_jvalues);
-
-			v.push_back(tmpv);
-		} else {
-			assert(0 && "invalid list-populate json type");
-		}
-	}
 }
 
 static bool runtest(const std::string& filename, const std::string& key,
@@ -153,8 +119,7 @@ static bool runtest(const std::string& filename, const std::string& key,
 		}
 	} else if (jval["in"].isArray()) {
 		RLPValue root(RLPValue::VARR);
-		const std::vector<UniValue>& values = jval["in"].getValues();
-		listPopulateJson(root, values);
+		JSONtoRLP(jval["in"], root);
 
 		std::string genOutput = root.write();
 		if ((outb.size() == genOutput.size()) &&
@@ -227,7 +192,8 @@ static void runtest_file(const char *filename_)
 static const char *filenames[] = {
 	"example.json",
 	"invalidRLPTest.json",
-//	"rlptest.json",
+	"rlptest.json",
+//	"longlist.json",
 };
 
 int main (int argc, char *argv[])

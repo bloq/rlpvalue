@@ -39,6 +39,7 @@ src_rlp_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 TEST_DATA_DIR=test/data
 
 test_unitester_SOURCES = \
+	src/rlp2json.cpp \
 	test/unitester.cpp \
 	test/utilstrencodings.h test/utilstrencodings.cpp
 test_unitester_LDADD = librlpvalue.la univalue/.libs/libunivalue.a
@@ -54,6 +55,7 @@ test_object_LDFLAGS = -static $(LIBTOOL_APP_LDFLAGS)
 TEST_FILES = \
 	test/data/example.json \
 	test/data/invalidRLPTest.json \
+	test/data/longlist.json \
 	test/data/rlptest.json
 
 EXTRA_DIST=$(TEST_FILES)
