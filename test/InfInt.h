@@ -44,9 +44,11 @@
 //#include <limits.h>
 //#include <stdlib.h>
 
+#ifndef LONG_LONG_MIN
 #define LONG_LONG_MIN std::numeric_limits<long long>::min()
 #define LONG_LONG_MAX std::numeric_limits<long long>::max()
 #define ULONG_LONG_MAX std::numeric_limits<unsigned long long>::max()
+#endif
 
 #ifdef INFINT_USE_EXCEPTIONS
 #include <exception>
